@@ -26,6 +26,7 @@ import ui.helper.getOutlinedTextFieldColors
 import util.DropdownOption
 import util.InputWrapper
 import model.parameters.Style
+import ui.helper.CardContainer
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -56,88 +57,78 @@ fun CreateDropdown(
         selectedText = it.optionName
     }
 
-    Card(
-        modifier = Modifier
-            .padding(16.dp)
-            .bringIntoViewRequester(bringIntoViewRequester),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
+    CardContainer {
+        GenerateText(
+            question = question,
+            style = style,
+            isMandatory = isMandatory,
+            parameterDescription = description
         )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            GenerateText(
-                question = question,
-                style = style,
-                isMandatory = isMandatory,
-                parameterDescription = description
+
+        Box {
+            OutlinedTextField(
+                value = selectedText,
+                onValueChange = {},
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { coordinates ->
+                        textFieldSize = coordinates.size.toSize()
+                    }
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { if (it.isFocused && isEnabled) expanded = true }
+                    .onFocusEvent {
+                        if (it.isFocused)
+                            bringIntoView(coroutineScope, bringIntoViewRequester)
+                    },
+                shape = RoundedCornerShape(16.dp),
+                colors = getOutlinedTextFieldColors(),
+                trailingIcon = {
+                    DropdownIcon(expanded = expanded)
+                },
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = {
+                    focusManager.moveFocus(
+                        FocusDirection.Down
+                    )
+                }),
+                enabled = isEnabled,
+                isError = dropdownValue.errorMessage.isNotEmpty(),
+                supportingText = {
+                    dropdownValue.errorMessage.takeIf { it.isNotEmpty() }?.let {
+                        Text(
+                            text = it,
+                            fontStyle = FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
             )
 
-            Box {
-                OutlinedTextField(
-                    value = selectedText,
-                    onValueChange = {},
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onGloballyPositioned { coordinates ->
-                            textFieldSize = coordinates.size.toSize()
-                        }
-                        .focusRequester(focusRequester)
-                        .onFocusChanged { if (it.isFocused && isEnabled) expanded = true }
-                        .onFocusEvent {
-                            if (it.isFocused)
-                                bringIntoView(coroutineScope, bringIntoViewRequester)
-                        },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = getOutlinedTextFieldColors(),
-                    trailingIcon = {
-                        DropdownIcon(expanded = expanded)
-                    },
-                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = {
-                        focusManager.moveFocus(
-                            FocusDirection.Down
-                        )
-                    }),
-                    enabled = isEnabled,
-                    isError = dropdownValue.errorMessage.isNotEmpty(),
-                    supportingText = {
-                        dropdownValue.errorMessage.takeIf { it.isNotEmpty() }?.let {
-                            Text(
-                                text = it,
-                                fontStyle = FontStyle.Italic,
-                                color = MaterialTheme.colorScheme.error
-                            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .alpha(0f)
+                    .clickable {
+                        if (isEnabled) {
+                            focusRequester.requestFocus()
+                            expanded = true
                         }
                     }
-                )
+            )
 
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .alpha(0f)
-                        .clickable {
-                            if (isEnabled) {
-                                focusRequester.requestFocus()
-                                expanded = true
-                            }
-                        }
-                )
-
-                DropdownMenuComponent(
-                    dropdownValue = dropdownValue.value,
-                    expanded = expanded,
-                    optionList = optionList,
-                    textFieldSize = textFieldSize,
-                    onClick = {
-                        onValueChanged(it.copy(isChecked = true))
-                        expanded = false
-                        focusRequester.requestFocus()
-                        bringIntoView(coroutineScope, bringIntoViewRequester)
-                    },
-                    onDismissRequest = { expanded = false }
-                )
-            }
+            DropdownMenuComponent(
+                dropdownValue = dropdownValue.value,
+                expanded = expanded,
+                optionList = optionList,
+                textFieldSize = textFieldSize,
+                onClick = {
+                    onValueChanged(it.copy(isChecked = true))
+                    expanded = false
+                    focusRequester.requestFocus()
+                    bringIntoView(coroutineScope, bringIntoViewRequester)
+                },
+                onDismissRequest = { expanded = false }
+            )
         }
     }
 
