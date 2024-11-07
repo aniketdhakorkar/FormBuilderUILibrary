@@ -1,3 +1,4 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -16,6 +17,8 @@ kotlin {
         }
     }
 
+    jvm("desktop")
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -28,6 +31,7 @@ kotlin {
     }
 
     sourceSets {
+        val desktopMain by getting
 
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
@@ -56,6 +60,10 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
 
             implementation(projects.formBuilderUI)
+        }
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(libs.kotlinx.coroutines.swing)
         }
     }
 }
@@ -97,3 +105,14 @@ android {
     }
 }
 
+compose.desktop {
+    application {
+        mainClass = "com.pratham.formbuilderui.MainKt"
+
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            packageName = "com.pratham.formbuilderui"
+            packageVersion = "1.0.0"
+        }
+    }
+}

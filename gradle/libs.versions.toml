@@ -1,23 +1,23 @@
 [versions]
-agp = "8.5.2"
+agp = "8.7.2"
 android-compileSdk = "34"
 android-minSdk = "24"
 android-targetSdk = "34"
-androidx-activityCompose = "1.9.1"
-compose-plugin = "1.7.0-alpha03"
-kotlin = "2.0.0"
-kotlinxSerializationJson = "1.7.1"
-lifecycleViewmodelCompose = "2.8.0"
-kermit = "2.0.3"
-datetime = "0.6.0"
-ktor-client = "2.3.11"
-coroutine = "1.8.1"
+androidx-activityCompose = "1.9.3"
+compose-plugin = "1.7.0"
+kotlin = "2.0.21"
+kotlinxSerializationJson = "1.7.3"
+lifecycleViewmodelCompose = "2.8.3"
+kermit = "2.0.4"
+datetime = "0.6.1"
+ktor-client = "3.0.1"
+coroutine = "1.9.0"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 lifecycle-viewmodel-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
-kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime"}
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor-client" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor-client" }
@@ -26,7 +26,9 @@ ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "k
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor-client" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor-client" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor-client" }
+ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor-client" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutine" }
+kotlinx-coroutines-swing = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "coroutine" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

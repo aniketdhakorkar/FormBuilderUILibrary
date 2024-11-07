@@ -2,10 +2,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -16,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ui.component.CreateDropdown
 import ui.component.CreateLabel
@@ -29,17 +33,22 @@ import model.parameters.toDropdown
 
 @Composable
 fun FormScreen(
-    parameterValueMap: MutableMap<Int, InputWrapper>,
-    parameterMap: MutableMap<Int, ChildrenX>,
-    visibilityMap: MutableMap<Int, Boolean>,
-    onClick: (MutableMap<Int, InputWrapper>) -> Unit
+    parameterValueMap: Map<Int, InputWrapper>,
+    parameterMap: Map<Int, ChildrenX>,
+    visibilityMap: Map<Int, Boolean>,
+    onClick: (Map<Int, InputWrapper>) -> Unit,
+    enabledStatusMap: Map<Int, Boolean>,
+    isSubmitButtonVisible: Boolean,
+    token: String
 ) {
 
-    val viewModel: FormScreenViewModel = viewModel()
+    val viewModel = viewModel { FormScreenViewModel() }
     val localParameterValueMap by viewModel.localParameterValueMap.collectAsState()
     val localParameterMap by viewModel.localParameterMap.collectAsState()
-    val localVisibilityMap by viewModel.localVisibilityMap.collectAsState()
+    val localVisibilityStatusMap by viewModel.localVisibilityStatusMap.collectAsState()
+    val localEnabledStatusMap by viewModel.localEnabledStatusMap.collectAsState()
     val dependentValueMap by viewModel.dependentValueMap.collectAsState()
+    val onlineDropdownOptionMap by viewModel.onlineDropdownOptionMap.collectAsState()
     val focusManager = LocalFocusManager.current
     val showProgressIndicator by viewModel.showProgressIndicator.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -49,7 +58,9 @@ fun FormScreen(
             viewModel.initData(
                 parameterValueMap = parameterValueMap,
                 parameterMap = parameterMap,
-                visibilityMap = visibilityMap
+                visibilityMap = visibilityMap,
+                enabledStatusMap = enabledStatusMap,
+                token = token
             )
     }
 
@@ -59,11 +70,22 @@ fun FormScreen(
         }
     }
 
+
     AppTheme {
-        Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) {
+        Scaffold(snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
+                    shape = RoundedCornerShape(8.dp)
+                )
+            }
+        }) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(top = 64.dp)
                     .background(color = MaterialTheme.colorScheme.background),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -76,11 +98,14 @@ fun FormScreen(
 
                         val parameterValue =
                             localParameterValueMap[parameter.first] ?: InputWrapper("")
-                        val isVisible = localVisibilityMap[parameter.first] ?: true
+                        val isVisible = localVisibilityStatusMap[parameter.first] ?: true
+                        val isEnabled = localEnabledStatusMap[parameter.first] ?: true
                         val question = parameter.second.elementLabel.en ?: ""
                         val description = parameter.second.elementTooltip.en ?: ""
                         val isMandatory = parameter.second.isRequired
                         val style = parameter.second.style
+                        val isOnlineDropdownOption =
+                            onlineDropdownOptionMap[parameter.first]?.isNotEmpty() ?: false
 
                         when (parameter.second.elementType) {
                             "ElementLabel" -> CreateLabel(
@@ -107,7 +132,7 @@ fun FormScreen(
                                     style = parameter.second.style,
                                     inputType = parameter.second.inputType,
                                     isVisible = isVisible,
-                                    isEnable = true,
+                                    isEnable = isEnabled,
                                     focusManager = focusManager,
                                     onFocusChange = {
                                         if (parameter.second.inputType == "number") {
@@ -131,7 +156,10 @@ fun FormScreen(
                                     description = description,
                                     isMandatory = isMandatory,
                                     style = style,
-                                    optionList = parameter.second.elementData.options.map { it.toDropdown() },
+                                    optionList = if (isOnlineDropdownOption)
+                                        onlineDropdownOptionMap[parameter.first] ?: emptyList()
+                                    else
+                                        parameter.second.elementData.options.map { it.toDropdown() },
                                     dropdownValue = parameterValue,
                                     onValueChanged = { option ->
                                         viewModel.onEvent(
@@ -142,7 +170,7 @@ fun FormScreen(
                                         )
                                     },
                                     isVisible = isVisible,
-                                    isEnabled = true,
+                                    isEnabled = isEnabled,
                                     focusManager = focusManager
                                 )
                             }
@@ -150,9 +178,10 @@ fun FormScreen(
                     }
                 }
 
-                SubmitButton(showProgressIndicator = showProgressIndicator, onClick = {
-                    viewModel.onEvent(FormScreenEvent.OnSubmitButtonClicked)
-                })
+                if (isSubmitButtonVisible)
+                    SubmitButton(showProgressIndicator = showProgressIndicator, onClick = {
+                        viewModel.onEvent(FormScreenEvent.OnSubmitButtonClicked(onClick = onClick))
+                    })
             }
         }
     }

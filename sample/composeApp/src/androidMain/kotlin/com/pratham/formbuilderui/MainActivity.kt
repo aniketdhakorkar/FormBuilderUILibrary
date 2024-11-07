@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -27,9 +26,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
-import ui.theme.AppTheme
 import util.InputWrapper
 import model.parameters.ChildrenX
 import model.parameters.Parameters
@@ -39,9 +36,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
-        val _parameterValueMap = MutableStateFlow<MutableMap<Int, InputWrapper>>(mutableMapOf())
-        val _parameterMap = MutableStateFlow<MutableMap<Int, ChildrenX>>(mutableMapOf())
-        val _visibilityMap = MutableStateFlow<MutableMap<Int, Boolean>>(mutableMapOf())
+        val _parameterValueMap = MutableStateFlow<Map<Int, InputWrapper>>(mutableMapOf())
+        val _parameterMap = MutableStateFlow<Map<Int, ChildrenX>>(mutableMapOf())
+        val _visibilityMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
+        val _enabledMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
 
         val httpClient = HttpClient {
             install(HttpTimeout) {
@@ -77,8 +75,8 @@ class MainActivity : ComponentActivity() {
                                 parameters {
                                     append("app_type", "1")
                                     append("project_id", "6")
-                                    append("program_id", "4")
-                                    append("category_id", "5")
+                                    append("program_id", "2")
+                                    append("category_id", "6")
                                 }
                             )
                         )
@@ -95,6 +93,7 @@ class MainActivity : ComponentActivity() {
             val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
             val parameterMap by _parameterMap.asStateFlow().collectAsState()
             val visibilityMap by _visibilityMap.asStateFlow().collectAsState()
+            val enabledMap by _enabledMap.asStateFlow().collectAsState()
             val scope = rememberCoroutineScope()
 
             LaunchedEffect(key1 = true) {
@@ -105,10 +104,11 @@ class MainActivity : ComponentActivity() {
                         .forEach { childX ->
                             _parameterValueMap.value =
                                 _parameterValueMap.value.toMutableMap().apply {
-                                    put(
-                                        childX.elementId,
-                                        InputWrapper(value = "")
-                                    )
+                                    if (childX.elementType != "ElementLabel" && childX.elementType != "ElementHidden")
+                                        put(
+                                            childX.elementId,
+                                            InputWrapper(value = "")
+                                        )
                                 }
 
                             _parameterMap.value = _parameterMap.value.toMutableMap().apply {
@@ -121,6 +121,10 @@ class MainActivity : ComponentActivity() {
                             _visibilityMap.value = _visibilityMap.value.toMutableMap().apply {
                                 put(childX.elementId, !childX.isDependent)
                             }
+
+                            _enabledMap.value = _enabledMap.value.toMutableMap().apply {
+                                put(childX.elementId, true)
+                            }
                         }
                 }.launchIn(scope = scope)
             }
@@ -128,7 +132,8 @@ class MainActivity : ComponentActivity() {
             App(
                 parameterValueMap = parameterValueMap,
                 parameterMap = parameterMap,
-                visibilityMap = visibilityMap
+                visibilityMap = visibilityMap,
+                enabledStatusMap = enabledMap
             )
         }
     }

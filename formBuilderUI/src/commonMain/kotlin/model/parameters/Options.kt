@@ -15,4 +15,4 @@ data class Options(
     val pValue: Int
 )
 
-fun Options.toDropdown() = DropdownOption(optionId = optionId, optionName = optionName.en ?: "")
+fun Options.toDropdown() = DropdownOption(optionId = pValue, optionName = optionName.en ?: "")

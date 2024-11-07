@@ -1,4 +1,5 @@
 import util.DropdownOption
+import util.InputWrapper
 
 sealed class FormScreenEvent {
 
@@ -10,5 +11,6 @@ sealed class FormScreenEvent {
     data class OnDropdownValueChanged(val elementId: Int, val option: DropdownOption) :
         FormScreenEvent()
 
-    data object OnSubmitButtonClicked : FormScreenEvent()
+    data class OnSubmitButtonClicked(val onClick: (Map<Int, InputWrapper>) -> Unit) :
+        FormScreenEvent()
 }

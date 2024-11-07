@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.toSize
 import ui.helper.DropdownIcon
@@ -41,6 +42,7 @@ fun CreateDropdown(
     isVisible: Boolean,
     isEnabled: Boolean,
     focusManager: FocusManager,
+    cardBackgroundColor: Color = MaterialTheme.colorScheme.secondaryContainer
 ) {
     if (!isVisible) return
 
@@ -53,11 +55,9 @@ fun CreateDropdown(
     var textFieldSize by remember { mutableStateOf(Size.Zero) }
 
     // Set selected text based on dropdown value
-    optionList.find { dropdownValue.value.toIntOrNull() == it.optionId }?.let {
-        selectedText = it.optionName
-    }
+    selectedText = optionList.find { dropdownValue.value.toIntOrNull() == it.optionId }?.optionName ?: ""
 
-    CardContainer {
+    CardContainer(cardBackgroundColor = cardBackgroundColor) {
         GenerateText(
             question = question,
             style = style,

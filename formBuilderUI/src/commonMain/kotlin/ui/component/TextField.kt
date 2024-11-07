@@ -15,6 +15,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -43,6 +44,7 @@ fun CreateTextField(
     isVisible: Boolean,
     isEnable: Boolean,
     focusManager: FocusManager,
+    cardBackgroundColor: Color = MaterialTheme.colorScheme.secondaryContainer
 ) {
 
     if (!isVisible) return
@@ -52,7 +54,7 @@ fun CreateTextField(
     val focusRequester = remember { FocusRequester() }
 
 
-    CardContainer {
+    CardContainer(cardBackgroundColor = cardBackgroundColor) {
         GenerateText(
             question = question,
             style = style,
