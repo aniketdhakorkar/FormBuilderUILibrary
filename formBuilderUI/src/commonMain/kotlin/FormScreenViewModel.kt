@@ -226,7 +226,7 @@ class FormScreenViewModel : ViewModel() {
             is FormScreenEvent.OnSubmitButtonClicked -> {
                 _showProgressIndicator.value = true
 
-                val isFieldEmpty = _localParameterValueMap.value.any { (key, inputWrapper) ->
+                val isFieldEmpty = _localParameterValueMap.value.isEmpty() || _localParameterValueMap.value.any { (key, inputWrapper) ->
                     val elementType = _localParameterMap.value[key]?.elementType
                     val isVisible = _localVisibilityStatusMap.value[key] == true
                     val isRequired = _localParameterMap.value[key]?.isRequired == "true"
@@ -257,6 +257,9 @@ class FormScreenViewModel : ViewModel() {
                     }
 
                     else -> {
+                        co.touchlab.kermit.Logger.d("ifelse") {
+                            "entering into else block"
+                        }
                         event.onClick(_localParameterValueMap.value)
                     }
                 }
