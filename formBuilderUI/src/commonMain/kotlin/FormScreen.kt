@@ -52,6 +52,7 @@ fun FormScreen(
     val focusManager = LocalFocusManager.current
     val showProgressIndicator by viewModel.showProgressIndicator.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val pattern = remember { Regex("^\\d+\$") }
 
     LaunchedEffect(parameterMap) {
         if (parameterMap.isNotEmpty())

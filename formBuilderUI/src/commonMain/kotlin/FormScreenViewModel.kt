@@ -98,9 +98,10 @@ class FormScreenViewModel : ViewModel() {
                                 )
                             }
 
-                            _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
-                                put(it.dependent, InputWrapper(value = "", errorMessage = ""))
-                            }
+                            _localParameterValueMap.value =
+                                _localParameterValueMap.value.toMutableMap().apply {
+                                    put(it.dependent, InputWrapper(value = "", errorMessage = ""))
+                                }
                         }
                     }
                 }
@@ -126,77 +127,99 @@ class FormScreenViewModel : ViewModel() {
             }
 
             is FormScreenEvent.OnTextFieldValueChanged -> {
-                if ((_localParameterMap.value[event.elementId]?.inputType ?: "") == "number") {
-                    val minValue = _localParameterMap.value[event.elementId]?.minVal
-                    val maxValue = _localParameterMap.value[event.elementId]?.maxVal
+                val valueType = (_localParameterMap.value[event.elementId]?.inputType ?: "")
 
-                    if (minValue != null && maxValue != null) {
-                        val result = validateInputInRange(
-                            newValue = event.value,
-                            minValue = minValue,
-                            maxValue = maxValue
-                        )
-                        if (result.isNotEmpty()) {
-                            SendUiEvent.send(
-                                viewModelScope = viewModelScope,
-                                _uiEvent = _uiEvent,
-                                event = result
+                when (valueType) {
+                    "number" -> {
+                        if (event.value.all { it.isDigit() }) {
+                            val minValue = _localParameterMap.value[event.elementId]?.minVal
+                            val maxValue = _localParameterMap.value[event.elementId]?.maxVal
+
+                            if (minValue != null && maxValue != null) {
+                                val result = validateInputInRange(
+                                    newValue = event.value,
+                                    minValue = minValue,
+                                    maxValue = maxValue
+                                )
+                                if (result.isNotEmpty()) {
+                                    SendUiEvent.send(
+                                        viewModelScope = viewModelScope,
+                                        _uiEvent = _uiEvent,
+                                        event = result
+                                    )
+                                    _localParameterValueMap.value =
+                                        _localParameterValueMap.value.toMutableMap().apply {
+                                            put(
+                                                event.elementId,
+                                                InputWrapper(
+                                                    value = event.value,
+                                                    errorMessage = result,
+                                                    isFocus = true
+                                                )
+                                            )
+                                        }
+                                    return
+                                }
+                            }
+
+                            val (remainingValue, parentValue, childValue, expression, dependentValue) = calculateRemainingValuesForValueChange(
+                                elementId = event.elementId,
+                                newValue = event.value,
+                                dependentOperatorMap = dependentOperatorMap.value,
+                                dependentValueMap = dependentValueMap.value,
+                                localParameterValueMap = localParameterValueMap.value
                             )
-                            _localParameterValueMap.value =
-                                _localParameterValueMap.value.toMutableMap().apply {
+
+                            val errorMessage = expressionValidation(
+                                expression = expression,
+                                remainingValue = remainingValue,
+                                parentValue = parentValue,
+                                childValue = childValue,
+                                dependentValue = dependentValue,
+                            )
+
+                            if (errorMessage.isNotBlank()) {
+                                SendUiEvent.send(
+                                    viewModelScope = viewModelScope,
+                                    _uiEvent = _uiEvent,
+                                    event = errorMessage
+                                )
+                                _localParameterValueMap.value =
+                                    _localParameterValueMap.value.toMutableMap().apply {
+                                        put(
+                                            event.elementId,
+                                            InputWrapper(
+                                                value = localParameterValueMap.value[event.elementId]?.value
+                                                    ?: "",
+                                                errorMessage = errorMessage,
+                                                isFocus = true
+                                            )
+                                        )
+                                    }
+                                return
+                            }
+
+                            _localParameterValueMap.value = _localParameterValueMap.value
+                                .toMutableMap()
+                                .apply {
                                     put(
                                         event.elementId,
-                                        InputWrapper(
-                                            value = event.value,
-                                            errorMessage = result,
-                                            isFocus = true
-                                        )
+                                        InputWrapper(value = event.value, errorMessage = "")
                                     )
                                 }
-                            return
                         }
                     }
 
-                    val (remainingValue, parentValue, childValue, expression, dependentValue) = calculateRemainingValuesForValueChange(
-                        elementId = event.elementId,
-                        newValue = event.value,
-                        dependentOperatorMap = dependentOperatorMap.value,
-                        dependentValueMap = dependentValueMap.value,
-                        localParameterValueMap = localParameterValueMap.value
-                    )
-
-                    val errorMessage = expressionValidation(
-                        expression = expression,
-                        remainingValue = remainingValue,
-                        parentValue = parentValue,
-                        childValue = childValue,
-                        dependentValue = dependentValue,
-                    )
-
-                    if (errorMessage.isNotBlank()) {
-                        SendUiEvent.send(
-                            viewModelScope = viewModelScope,
-                            _uiEvent = _uiEvent,
-                            event = errorMessage
-                        )
-                        _localParameterValueMap.value =
-                            _localParameterValueMap.value.toMutableMap().apply {
+                    "text" -> {
+                        _localParameterValueMap.value = _localParameterValueMap.value
+                            .toMutableMap()
+                            .apply {
                                 put(
                                     event.elementId,
-                                    InputWrapper(
-                                        value = localParameterValueMap.value[event.elementId]?.value
-                                            ?: "",
-                                        errorMessage = errorMessage,
-                                        isFocus = true
-                                    )
+                                    InputWrapper(value = event.value, errorMessage = "")
                                 )
                             }
-                        return
                     }
-                }
-
-                _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
-                    put(event.elementId, InputWrapper(value = event.value, errorMessage = ""))
                 }
             }
 
@@ -206,10 +229,11 @@ class FormScreenViewModel : ViewModel() {
                 val isFieldEmpty = _localParameterValueMap.value.any { (key, inputWrapper) ->
                     val elementType = _localParameterMap.value[key]?.elementType
                     val isVisible = _localVisibilityStatusMap.value[key] == true
+                    val isRequired = _localParameterMap.value[key]?.isRequired == "true"
                     elementType !in listOf(
                         "ElementLabel",
                         "ElementHidden"
-                    ) && isVisible && inputWrapper.value.isEmpty()
+                    ) && isVisible && isRequired && inputWrapper.value.isEmpty()
                 }
 
                 val firstError =
