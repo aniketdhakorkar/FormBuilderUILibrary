@@ -26,7 +26,6 @@ import util.DependentValueCustomText
 import util.InputWrapper
 import util.SendUiEvent
 import model.parameters.ChildrenX
-import model.parameters.ElementData
 import util.DropdownOption
 import validation.calculateRemainingValuesForFocusChange
 import validation.calculateRemainingValuesForValueChange
@@ -257,9 +256,6 @@ class FormScreenViewModel : ViewModel() {
                     }
 
                     else -> {
-                        co.touchlab.kermit.Logger.d("ifelse") {
-                            "entering into else block"
-                        }
                         event.onClick(_localParameterValueMap.value)
                     }
                 }
