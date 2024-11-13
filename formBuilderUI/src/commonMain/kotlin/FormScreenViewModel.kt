@@ -88,10 +88,20 @@ class FormScreenViewModel : ViewModel() {
                     if (elementData.dependentApi != null) {
                         elementData.dependentApi.forEach {
                             viewModelScope.launch {
+                                var filterMap: Map<String, String> = emptyMap()
+                                it.parameter.forEach { (key, value) ->
+                                    filterMap = filterMap.toMutableMap().apply {
+                                        put(
+                                            key = key,
+                                            value = _localParameterValueMap.value[value]?.value
+                                                ?: "0"
+                                        )
+                                    }
+
+                                }
                                 remoteApi(
                                     url = it.url,
-                                    key = it.parameter.keys.first(),
-                                    value = event.option.optionId.toString(),
+                                    filterMap = filterMap,
                                     elementId = it.dependent,
                                     token = _token
                                 )
@@ -225,15 +235,16 @@ class FormScreenViewModel : ViewModel() {
             is FormScreenEvent.OnSubmitButtonClicked -> {
                 _showProgressIndicator.value = true
 
-                val isFieldEmpty = _localParameterValueMap.value.isEmpty() || _localParameterValueMap.value.any { (key, inputWrapper) ->
-                    val elementType = _localParameterMap.value[key]?.elementType
-                    val isVisible = _localVisibilityStatusMap.value[key] == true
-                    val isRequired = _localParameterMap.value[key]?.isRequired == "true"
-                    elementType !in listOf(
-                        "ElementLabel",
-                        "ElementHidden"
-                    ) && isVisible && isRequired && inputWrapper.value.isEmpty()
-                }
+                val isFieldEmpty =
+                    _localParameterValueMap.value.isEmpty() || _localParameterValueMap.value.any { (key, inputWrapper) ->
+                        val elementType = _localParameterMap.value[key]?.elementType
+                        val isVisible = _localVisibilityStatusMap.value[key] == true
+                        val isRequired = _localParameterMap.value[key]?.isRequired == "true"
+                        elementType !in listOf(
+                            "ElementLabel",
+                            "ElementHidden"
+                        ) && isVisible && isRequired && inputWrapper.value.isEmpty()
+                    }
 
                 val firstError =
                     _localParameterValueMap.value.entries.firstOrNull { it.value.errorMessage.isNotBlank() }
@@ -303,9 +314,8 @@ class FormScreenViewModel : ViewModel() {
                     try {
                         remoteApi(
                             url = element.elementData.dataUrl,
-                            key = null,
-                            value = null,
                             elementId = element.elementId,
+                            filterMap = emptyMap(),
                             token = token
                         )
                     } catch (e: Exception) {
@@ -326,8 +336,7 @@ class FormScreenViewModel : ViewModel() {
 
     private suspend fun remoteApi(
         url: String,
-        key: String?,
-        value: String?,
+        filterMap: Map<String, String>,
         elementId: Int,
         token: String
     ) {
@@ -336,8 +345,9 @@ class FormScreenViewModel : ViewModel() {
         val result = try {
             httpClient.get(url) {
                 url {
-                    if (key != null && value != null)
+                    filterMap.forEach { (key, value) ->
                         parameters.append(key, value)
+                    }
                 }
             }
         } catch (e: IOException) {
