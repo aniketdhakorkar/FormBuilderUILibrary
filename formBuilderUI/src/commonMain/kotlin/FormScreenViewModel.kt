@@ -240,10 +240,7 @@ class FormScreenViewModel : ViewModel() {
                         val elementType = _localParameterMap.value[key]?.elementType
                         val isVisible = _localVisibilityStatusMap.value[key] == true
                         val isRequired = _localParameterMap.value[key]?.isRequired == "true"
-                        elementType !in listOf(
-                            "ElementLabel",
-                            "ElementHidden"
-                        ) && isVisible && isRequired && inputWrapper.value.isEmpty()
+                        elementType != "ElementLabel" && isVisible && isRequired && inputWrapper.value.isEmpty()
                     }
 
                 val firstError =
