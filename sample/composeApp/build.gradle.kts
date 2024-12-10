@@ -17,7 +17,7 @@ kotlin {
         }
     }
 
-    jvm("desktop")
+    //jvm("desktop")
 
     listOf(
         iosX64(),
@@ -31,7 +31,6 @@ kotlin {
     }
 
     sourceSets {
-        val desktopMain by getting
 
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
@@ -60,10 +59,6 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
 
             implementation(projects.formBuilderUI)
-        }
-        desktopMain.dependencies {
-            implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutines.swing)
         }
     }
 }

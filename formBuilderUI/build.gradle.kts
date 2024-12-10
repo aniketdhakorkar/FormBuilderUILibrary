@@ -21,7 +21,7 @@ kotlin {
         publishLibraryVariants("release","debug")
     }
 
-    jvm("desktop")
+    //jvm("desktop")
 
     listOf(
         iosX64(),
@@ -33,13 +33,20 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
 
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.kotlinx.coroutines.android)
+            implementation(libs.camera.core)
+            implementation(libs.camera.camera2)
+            implementation(libs.androidx.camera.view)
+            implementation(libs.camera.lifecycle)
+            implementation(libs.camera.extensions)
+            implementation(libs.androidx.startup.runtime)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -49,6 +56,7 @@ kotlin {
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
             implementation(libs.lifecycle.viewmodel.compose)
+            implementation(compose.materialIconsExtended)
 
             //ktor
             implementation(libs.ktor.client.core)
@@ -66,6 +74,12 @@ kotlin {
 
             //serialization
             implementation(libs.kotlinx.serialization.json)
+
+            //coil
+            implementation(libs.coil3.compose.core)
+            implementation(libs.coil3)
+            implementation(libs.coil3.ktor)
+            implementation(libs.coil3.compose)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -110,7 +124,7 @@ mavenPublishing {
     coordinates(
         groupId = "io.github.aniketdhakorkar",
         artifactId = "form-builder-ui",
-        version = "1.0.0-beta-25"
+        version = "1.0.0-beta-26"
     )
 
     // Configure POM metadata for the published artifact

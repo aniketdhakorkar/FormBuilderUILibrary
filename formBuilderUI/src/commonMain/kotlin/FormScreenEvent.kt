@@ -5,7 +5,7 @@ sealed class FormScreenEvent {
 
     data class OnTextFieldValueChanged(val elementId: Int, val value: String) : FormScreenEvent()
 
-    data class OnTextFieldValueFocusChanged(val elementId: Int, val isFocused: Boolean) :
+    data class OnTextFieldFocusChanged(val elementId: Int, val isFocused: Boolean) :
         FormScreenEvent()
 
     data class OnDropdownValueChanged(val elementId: Int, val option: DropdownOption) :
@@ -13,4 +13,8 @@ sealed class FormScreenEvent {
 
     data class OnSubmitButtonClicked(val onClick: (Map<Int, InputWrapper>) -> Unit) :
         FormScreenEvent()
+
+    data class OnCameraButtonClicked(val elementId: Int, val data: String) : FormScreenEvent()
+
+    data class OnPhotoDeleteButtonClicked(val elementId: Int, val index: Int) : FormScreenEvent()
 }

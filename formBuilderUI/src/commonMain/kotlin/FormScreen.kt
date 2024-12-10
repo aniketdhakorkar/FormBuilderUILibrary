@@ -21,6 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.compose.setSingletonImageLoaderFactory
+import coil3.disk.DiskCache
+import coil3.memory.MemoryCache
+import coil3.request.CachePolicy
+import coil3.request.crossfade
+import coil3.util.DebugLogger
 import ui.component.CreateDropdown
 import ui.component.CreateLabel
 import ui.component.CreateTextField
@@ -30,6 +38,8 @@ import util.DependentValueCustomText
 import util.InputWrapper
 import model.parameters.ChildrenX
 import model.parameters.toDropdown
+import okio.FileSystem
+import ui.component.CreateCamera
 
 @Composable
 fun FormScreen(
@@ -42,6 +52,9 @@ fun FormScreen(
     token: String
 ) {
 
+    setSingletonImageLoaderFactory { context ->
+        getAsyncImageLoader(context)
+    }
     val viewModel = viewModel { FormScreenViewModel() }
     val localParameterValueMap by viewModel.localParameterValueMap.collectAsState()
     val localParameterMap by viewModel.localParameterMap.collectAsState()
@@ -52,7 +65,6 @@ fun FormScreen(
     val focusManager = LocalFocusManager.current
     val showProgressIndicator by viewModel.showProgressIndicator.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val pattern = remember { Regex("^\\d+\$") }
 
     LaunchedEffect(parameterMap) {
         if (parameterMap.isNotEmpty())
@@ -138,7 +150,7 @@ fun FormScreen(
                                     onFocusChange = {
                                         if (parameter.second.inputType == "number") {
                                             viewModel.onEvent(
-                                                FormScreenEvent.OnTextFieldValueFocusChanged(
+                                                FormScreenEvent.OnTextFieldFocusChanged(
                                                     elementId = parameter.second.elementId,
                                                     isFocused = it
                                                 )
@@ -175,6 +187,32 @@ fun FormScreen(
                                     focusManager = focusManager
                                 )
                             }
+
+                            "ElementImageUpload" -> {
+                                CreateCamera(
+                                    question = question,
+                                    description = description,
+                                    isMandatory = isMandatory,
+                                    style = style,
+                                    imageList = parameterValue.value.split("&").toList(),
+                                    onCameraButtonClicked = {
+                                        viewModel.onEvent(
+                                            FormScreenEvent.OnCameraButtonClicked(
+                                                elementId = parameter.second.elementId,
+                                                data = it
+                                            )
+                                        )
+                                    },
+                                    onPhotoDeleteButtonClicked = {
+                                        viewModel.onEvent(
+                                            FormScreenEvent.OnPhotoDeleteButtonClicked(
+                                                elementId = parameter.second.elementId,
+                                                index = it
+                                            )
+                                        )
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -186,4 +224,17 @@ fun FormScreen(
             }
         }
     }
+}
+
+fun getAsyncImageLoader(context: PlatformContext) =
+    ImageLoader.Builder(context).memoryCachePolicy(CachePolicy.ENABLED).memoryCache {
+        MemoryCache.Builder().maxSizePercent(context, 0.3).strongReferencesEnabled(true).build()
+    }.diskCachePolicy(CachePolicy.ENABLED).networkCachePolicy(CachePolicy.ENABLED).diskCache {
+        newDiskCache()
+    }.crossfade(true).logger(DebugLogger()).build()
+
+fun newDiskCache(): DiskCache {
+    return DiskCache.Builder().directory(FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "image_cache")
+        .maxSizeBytes(1024L * 1024 * 1024) // 512MB
+        .build()
 }

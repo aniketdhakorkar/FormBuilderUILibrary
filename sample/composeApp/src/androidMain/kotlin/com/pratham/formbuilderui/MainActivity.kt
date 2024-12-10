@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        /*val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
+        val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
         val _parameterValueMap = MutableStateFlow<Map<Int, InputWrapper>>(mutableMapOf())
         val _parameterMap = MutableStateFlow<Map<Int, ChildrenX>>(mutableMapOf())
         val _visibilityMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
@@ -75,8 +75,8 @@ class MainActivity : ComponentActivity() {
                                 parameters {
                                     append("app_type", "1")
                                     append("project_id", "6")
-                                    append("program_id", "4")
-                                    append("category_id", "4")
+                                    append("program_id", "10")
+                                    append("category_id", "3")
                                 }
                             )
                         )
@@ -85,11 +85,11 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }*/
+        }
 
         setContent {
 
-            /*val parameters by _parameters.asStateFlow().collectAsState()
+            val parameters by _parameters.asStateFlow().collectAsState()
             val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
             val parameterMap by _parameterMap.asStateFlow().collectAsState()
             val visibilityMap by _visibilityMap.asStateFlow().collectAsState()
@@ -134,7 +134,7 @@ class MainActivity : ComponentActivity() {
                 parameterMap = parameterMap,
                 visibilityMap = visibilityMap,
                 enabledStatusMap = enabledMap
-            )*/
+            )
         }
     }
 }

@@ -29,6 +29,7 @@ import model.parameters.ChildrenX
 import util.DropdownOption
 import validation.calculateRemainingValuesForFocusChange
 import validation.calculateRemainingValuesForValueChange
+import validation.checkMobileNoValidation
 import validation.expressionValidation
 import validation.hideAndShowValidation
 import validation.validateInputInRange
@@ -116,7 +117,7 @@ class FormScreenViewModel : ViewModel() {
                 }
             }
 
-            is FormScreenEvent.OnTextFieldValueFocusChanged -> {
+            is FormScreenEvent.OnTextFieldFocusChanged -> {
                 if (event.isFocused) {
 
                     val remainingValue =
@@ -229,6 +230,42 @@ class FormScreenViewModel : ViewModel() {
                                 )
                             }
                     }
+
+                    "mobile" -> {
+                        if (event.value.all { it.isDigit() }) {
+
+                            val result = checkMobileNoValidation(mobileNo = event.value)
+
+                            if (result.isNotBlank()) {
+                                SendUiEvent.send(
+                                    viewModelScope = viewModelScope,
+                                    _uiEvent = _uiEvent,
+                                    event = result
+                                )
+                                _localParameterValueMap.value =
+                                    _localParameterValueMap.value.toMutableMap().apply {
+                                        put(
+                                            event.elementId,
+                                            InputWrapper(
+                                                value = event.value,
+                                                errorMessage = result,
+                                                isFocus = true
+                                            )
+                                        )
+                                    }
+                                return
+                            } else if (event.value.length <= 10) {
+                                _localParameterValueMap.value = _localParameterValueMap.value
+                                    .toMutableMap()
+                                    .apply {
+                                        put(
+                                            event.elementId,
+                                            InputWrapper(value = event.value, errorMessage = "")
+                                        )
+                                    }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -269,6 +306,53 @@ class FormScreenViewModel : ViewModel() {
                 }
 
                 _showProgressIndicator.value = false
+            }
+
+            is FormScreenEvent.OnCameraButtonClicked -> {
+                if (_localParameterValueMap.value[event.elementId]?.value.isNullOrBlank()) {
+                    _localParameterValueMap.value =
+                        _localParameterValueMap.value.toMutableMap().apply {
+                            put(
+                                event.elementId,
+                                InputWrapper(
+                                    value = event.data,
+                                    errorMessage = ""
+                                )
+                            )
+                        }
+                } else {
+                    val temp = (_localParameterValueMap.value[event.elementId]?.value ?: "")
+                        .split("&")
+                        .toMutableList()
+                    temp.add(event.data)
+                    _localParameterValueMap.value =
+                        _localParameterValueMap.value.toMutableMap().apply {
+                            put(
+                                event.elementId,
+                                InputWrapper(
+                                    value = temp.joinToString(separator = "&"),
+                                    errorMessage = ""
+                                )
+                            )
+                        }
+                }
+            }
+
+            is FormScreenEvent.OnPhotoDeleteButtonClicked -> {
+                val temp = (_localParameterValueMap.value[event.elementId]?.value ?: "")
+                    .split("&")
+                    .toMutableList()
+                temp.removeAt(index = event.index)
+                _localParameterValueMap.value =
+                    _localParameterValueMap.value.toMutableMap().apply {
+                        put(
+                            event.elementId,
+                            InputWrapper(
+                                value = temp.joinToString(separator = "&"),
+                                errorMessage = ""
+                            )
+                        )
+                    }
             }
         }
     }
