@@ -16,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
@@ -29,6 +30,7 @@ import coil3.memory.MemoryCache
 import coil3.request.CachePolicy
 import coil3.request.crossfade
 import coil3.util.DebugLogger
+import kotlinx.coroutines.CoroutineScope
 import ui.component.CreateDropdown
 import ui.component.CreateLabel
 import ui.component.CreateTextField
@@ -40,6 +42,7 @@ import model.parameters.ChildrenX
 import model.parameters.toDropdown
 import okio.FileSystem
 import ui.component.CreateCamera
+import util.SnackbarController
 
 @Composable
 fun FormScreen(
@@ -55,6 +58,8 @@ fun FormScreen(
     setSingletonImageLoaderFactory { context ->
         getAsyncImageLoader(context)
     }
+    val scope = rememberCoroutineScope()
+    val snackbarController = SnackbarController(scope = scope)
     val viewModel = viewModel { FormScreenViewModel() }
     val localParameterValueMap by viewModel.localParameterValueMap.collectAsState()
     val localParameterMap by viewModel.localParameterMap.collectAsState()
@@ -79,7 +84,7 @@ fun FormScreen(
 
     LaunchedEffect(true) {
         viewModel.uiEvent.collect { event ->
-            snackbarHostState.showSnackbar(message = event)
+            snackbarController.showSnackbar(snackbarHostState = snackbarHostState, message = event)
         }
     }
 

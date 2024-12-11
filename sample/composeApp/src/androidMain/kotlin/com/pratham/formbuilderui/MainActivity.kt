@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        /*val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
+        val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
         val _parameterValueMap = MutableStateFlow<Map<Int, InputWrapper>>(mutableMapOf())
         val _parameterMap = MutableStateFlow<Map<Int, ChildrenX>>(mutableMapOf())
         val _visibilityMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
@@ -85,11 +85,11 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }*/
+        }
 
         setContent {
 
-            /*val parameters by _parameters.asStateFlow().collectAsState()
+            val parameters by _parameters.asStateFlow().collectAsState()
             val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
             val parameterMap by _parameterMap.asStateFlow().collectAsState()
             val visibilityMap by _visibilityMap.asStateFlow().collectAsState()
@@ -134,7 +134,7 @@ class MainActivity : ComponentActivity() {
                 parameterMap = parameterMap,
                 visibilityMap = visibilityMap,
                 enabledStatusMap = enabledMap
-            )*/
+            )
         }
     }
 }
