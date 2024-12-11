@@ -5,15 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -22,12 +14,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FlashOff
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -53,6 +48,7 @@ import cameraK.enums.CameraLens
 import cameraK.enums.Directory
 import cameraK.enums.FlashMode
 import cameraK.enums.ImageFormat
+import cameraK.enums.Rotation
 import cameraK.permissions.Permissions
 import cameraK.permissions.providePermissions
 import cameraK.result.ImageCaptureResult
@@ -104,6 +100,7 @@ fun CreateCamera(
     val isViewCamera = remember {
         mutableStateOf(false)
     }
+
     CardContainer(cardBackgroundColor = MaterialTheme.colorScheme.secondaryContainer) {
         GenerateText(
             question = question,
@@ -271,6 +268,8 @@ fun CameraScreen(
     onCameraButtonClicked: (String) -> Unit
 ) {
     val scope = rememberCoroutineScope()
+    var isFlashOn by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -284,31 +283,64 @@ fun CameraScreen(
             )
         }
 
-        // Capture Button at the Bottom Center
-        IconButton(
-            onClick = {
-                scope.launch {
-                    when (val result = cameraController.takePicture()) {
-                        is ImageCaptureResult.Success -> {
-                            val res = Json.encodeToString(result.byteArray)
-                            onCameraButtonClicked(res)
-                            onCloseButtonClicked()
-                        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp)
+                .align(Alignment.BottomCenter)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                when (val result = cameraController.takePicture()) {
+                                    is ImageCaptureResult.Success -> {
+                                        val res = Json.encodeToString(result.byteArray)
+                                        onCameraButtonClicked(res)
+                                        onCloseButtonClicked()
+                                    }
 
-                        is ImageCaptureResult.Error -> {
-                            println("Image Capture Error: ${result.exception.message}")
-                        }
+                                    is ImageCaptureResult.Error -> {
+                                        println("Image Capture Error: ${result.exception.message}")
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier.size(72.dp)
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(128.dp),
+                            imageVector = Icons.Filled.Camera,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.surface
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            isFlashOn = !isFlashOn
+                            cameraController.toggleFlashMode()
+                        },
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .offset(x = 88.dp)
+                    ) {
+                        Icon(
+                            modifier = Modifier.size(24.dp),
+                            imageVector = if (isFlashOn) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
+                            contentDescription = null,
+                            tint = if (isFlashOn) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                        )
                     }
                 }
-            }, modifier = Modifier.size(70.dp).clip(CircleShape).align(Alignment.BottomCenter)
-
-        ) {
-            Icon(
-                modifier = Modifier.size(128.dp),
-                imageVector = Icons.Filled.Camera,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.surface
-            )
+            }
         }
     }
 }

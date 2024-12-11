@@ -3,6 +3,8 @@ package cameraK.controller
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -123,7 +125,7 @@ actual class CameraController(
     }
 
 
-    actual suspend fun takePicture(): ImageCaptureResult =
+    /*actual suspend fun takePicture(): ImageCaptureResult =
         suspendCancellableCoroutine { cont ->
             val outputOptions = ImageCapture.OutputFileOptions.Builder(createTempFile()).build()
 
@@ -147,6 +149,76 @@ actual class CameraController(
                                     )
                                     stream.toByteArray()
                                 }
+                        } catch (e: Exception) {
+                            null
+                        }
+
+                        if (byteArray != null) {
+                            imageCaptureListeners.forEach { it(byteArray) }
+                            cont.resume(ImageCaptureResult.Success(byteArray))
+                        } else {
+                            cont.resume(ImageCaptureResult.Error(Exception("Failed to convert image to ByteArray.")))
+                        }
+                    }
+
+                    override fun onError(exc: ImageCaptureException) {
+                        cont.resume(ImageCaptureResult.Error(exc))
+                    }
+                }
+            )
+                ?: cont.resume(ImageCaptureResult.Error(Exception("ImageCapture use case is not initialized.")))
+        }*/
+
+    actual suspend fun takePicture(): ImageCaptureResult =
+        suspendCancellableCoroutine { cont ->
+            val outputOptions = ImageCapture.OutputFileOptions.Builder(createTempFile()).build()
+
+            imageCapture?.takePicture(
+                outputOptions,
+                ContextCompat.getMainExecutor(context),
+                object : ImageCapture.OnImageSavedCallback {
+                    override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                        val byteArray = try {
+                            output.savedUri?.path?.let { path ->
+                                // Read Exif orientation
+                                val exif = ExifInterface(path)
+                                val rotationDegrees = when (exif.getAttributeInt(
+                                    ExifInterface.TAG_ORIENTATION,
+                                    ExifInterface.ORIENTATION_NORMAL
+                                )) {
+                                    ExifInterface.ORIENTATION_ROTATE_90 -> 90
+                                    ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                                    ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                                    else -> 0
+                                }
+
+                                // Decode Bitmap and apply rotation
+                                BitmapFactory.decodeFile(path)?.let { bitmap ->
+                                    val matrix =
+                                        Matrix().apply { postRotate(rotationDegrees.toFloat()) }
+                                    val rotatedBitmap = Bitmap.createBitmap(
+                                        bitmap,
+                                        0,
+                                        0,
+                                        bitmap.width,
+                                        bitmap.height,
+                                        matrix,
+                                        true
+                                    )
+
+                                    // Convert the rotated Bitmap to ByteArray
+                                    val stream = ByteArrayOutputStream()
+                                    rotatedBitmap.compress(
+                                        when (imageFormat) {
+                                            ImageFormat.JPEG -> Bitmap.CompressFormat.JPEG
+                                            ImageFormat.PNG -> Bitmap.CompressFormat.PNG
+                                        },
+                                        80,
+                                        stream
+                                    )
+                                    stream.toByteArray()
+                                }
+                            }
                         } catch (e: Exception) {
                             null
                         }
