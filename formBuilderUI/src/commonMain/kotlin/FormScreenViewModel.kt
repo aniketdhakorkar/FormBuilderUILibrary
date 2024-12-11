@@ -254,16 +254,15 @@ class FormScreenViewModel : ViewModel() {
                                         )
                                     }
                                 return
-                            } else if (event.value.length <= 10) {
-                                _localParameterValueMap.value = _localParameterValueMap.value
-                                    .toMutableMap()
-                                    .apply {
-                                        put(
-                                            event.elementId,
-                                            InputWrapper(value = event.value, errorMessage = "")
-                                        )
-                                    }
                             }
+                            _localParameterValueMap.value = _localParameterValueMap.value
+                                .toMutableMap()
+                                .apply {
+                                    put(
+                                        event.elementId,
+                                        InputWrapper(value = event.value, errorMessage = "")
+                                    )
+                                }
                         }
                     }
                 }
