@@ -53,6 +53,7 @@ import cameraK.permissions.Permissions
 import cameraK.permissions.providePermissions
 import cameraK.result.ImageCaptureResult
 import cameraK.ui.CameraPreview
+import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -110,7 +111,23 @@ fun CreateCamera(
         )
         LazyRow(verticalAlignment = Alignment.CenterVertically) {
             itemsIndexed(imageList) { index, image ->
-                if (image.isNotEmpty()) {
+                if (image.isNotEmpty() && image.contains("https")) {
+                    Box(
+                        modifier = Modifier
+                            .width(220.dp)
+                            .height(280.dp)
+                            .padding(end = 8.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                isViewCamera.value = true
+                            }.background(
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(.1f)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AsyncImage(model = image, contentDescription = null)
+                    }
+                } else {
                     val bitmap =
                         Json.decodeFromString<ByteArray>(string = image).decodeToImageBitmap()
 
