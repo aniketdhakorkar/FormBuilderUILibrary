@@ -1,4 +1,4 @@
-import util.DropdownOption
+import model.DropdownOption
 import util.InputWrapper
 
 sealed class FormScreenEvent {

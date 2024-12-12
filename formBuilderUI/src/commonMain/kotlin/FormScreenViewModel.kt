@@ -26,7 +26,7 @@ import util.DependentValueCustomText
 import util.InputWrapper
 import util.SendUiEvent
 import model.parameters.ChildrenX
-import util.DropdownOption
+import model.DropdownOption
 import validation.calculateRemainingValuesForFocusChange
 import validation.calculateRemainingValuesForValueChange
 import validation.checkMobileNoValidation
@@ -79,7 +79,7 @@ class FormScreenViewModel : ViewModel() {
                 _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
                     put(
                         event.elementId,
-                        InputWrapper(value = event.option.optionId.toString(), errorMessage = "")
+                        InputWrapper(value = event.option.pValue.toString(), errorMessage = "")
                     )
                 }
 
@@ -308,50 +308,30 @@ class FormScreenViewModel : ViewModel() {
             }
 
             is FormScreenEvent.OnCameraButtonClicked -> {
-                if (_localParameterValueMap.value[event.elementId]?.value.isNullOrBlank()) {
-                    _localParameterValueMap.value =
-                        _localParameterValueMap.value.toMutableMap().apply {
-                            put(
-                                event.elementId,
-                                InputWrapper(
-                                    value = event.data,
-                                    errorMessage = ""
-                                )
-                            )
-                        }
+                val currentData = _localParameterValueMap.value[event.elementId]?.value.orEmpty()
+                val updatedData = if (currentData.isBlank()) {
+                    event.data
                 } else {
-                    val temp = (_localParameterValueMap.value[event.elementId]?.value ?: "")
-                        .split("&")
-                        .toMutableList()
-                    temp.add(event.data)
-                    _localParameterValueMap.value =
-                        _localParameterValueMap.value.toMutableMap().apply {
-                            put(
-                                event.elementId,
-                                InputWrapper(
-                                    value = temp.joinToString(separator = "&"),
-                                    errorMessage = ""
-                                )
-                            )
-                        }
+                    "$currentData&${event.data}"
                 }
+
+                _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
+                    put(event.elementId, InputWrapper(value = updatedData, errorMessage = ""))
+                }
+
             }
 
             is FormScreenEvent.OnPhotoDeleteButtonClicked -> {
-                val temp = (_localParameterValueMap.value[event.elementId]?.value ?: "")
-                    .split("&")
-                    .toMutableList()
-                temp.removeAt(index = event.index)
-                _localParameterValueMap.value =
-                    _localParameterValueMap.value.toMutableMap().apply {
-                        put(
-                            event.elementId,
-                            InputWrapper(
-                                value = temp.joinToString(separator = "&"),
-                                errorMessage = ""
-                            )
-                        )
+                val currentData = _localParameterValueMap.value[event.elementId]?.value.orEmpty()
+                val updatedData = currentData.split("&").toMutableList().apply {
+                    if (event.index in indices) {
+                        removeAt(event.index)
                     }
+                }.joinToString(separator = "&")
+
+                _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
+                    put(event.elementId, InputWrapper(value = updatedData, errorMessage = ""))
+                }
             }
         }
     }

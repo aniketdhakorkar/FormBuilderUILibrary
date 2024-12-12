@@ -3,7 +3,7 @@ package model.parameters
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import util.DropdownOption
+import model.DropdownOption
 
 @Serializable
 data class Options(
@@ -15,4 +15,5 @@ data class Options(
     val pValue: Int
 )
 
-fun Options.toDropdown() = DropdownOption(optionId = pValue, optionName = optionName.en ?: "")
+fun Options.toDropdown() =
+    DropdownOption(optionId = optionId, pValue = pValue, optionName = optionName.en ?: "")

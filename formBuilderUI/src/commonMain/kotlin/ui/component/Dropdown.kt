@@ -3,7 +3,6 @@ package ui.component
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -24,7 +23,7 @@ import ui.helper.DropdownIcon
 import ui.helper.DropdownMenuComponent
 import ui.helper.bringIntoView
 import ui.helper.getOutlinedTextFieldColors
-import util.DropdownOption
+import model.DropdownOption
 import util.InputWrapper
 import model.parameters.Style
 import ui.helper.CardContainer
@@ -55,7 +54,7 @@ fun CreateDropdown(
     var textFieldSize by remember { mutableStateOf(Size.Zero) }
 
     // Set selected text based on dropdown value
-    selectedText = optionList.find { dropdownValue.value.toIntOrNull() == it.optionId }?.optionName ?: ""
+    selectedText = optionList.find { dropdownValue.value.toIntOrNull() == it.pValue }?.optionName ?: ""
 
     CardContainer(cardBackgroundColor = cardBackgroundColor) {
         GenerateText(

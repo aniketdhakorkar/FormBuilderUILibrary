@@ -3,7 +3,7 @@ package model.filter
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import util.DropdownOption
+import model.DropdownOption
 
 @Serializable
 data class Data(
@@ -13,4 +13,4 @@ data class Data(
     val name: String,
 )
 
-fun Data.toDropdown() = DropdownOption(optionId = id, optionName = name)
+fun Data.toDropdown() = DropdownOption(optionId = 0, optionName = name, pValue = id)
