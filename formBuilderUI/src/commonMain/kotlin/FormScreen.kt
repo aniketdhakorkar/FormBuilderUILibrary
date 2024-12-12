@@ -194,12 +194,14 @@ fun FormScreen(
                             }
 
                             "ElementImageUpload" -> {
+                                val delimiter = if (parameterValue.value.contains("https")) "," else "&"
+
                                 CreateCamera(
                                     question = question,
                                     description = description,
                                     isMandatory = isMandatory,
                                     style = style,
-                                    imageList = parameterValue.value.split("&").toList(),
+                                    imageList = parameterValue.value.split(delimiter).toList(),
                                     onCameraButtonClicked = {
                                         viewModel.onEvent(
                                             FormScreenEvent.OnCameraButtonClicked(
