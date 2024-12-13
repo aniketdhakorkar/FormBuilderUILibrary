@@ -307,7 +307,7 @@ class FormScreenViewModel : ViewModel() {
                 _showProgressIndicator.value = false
             }
 
-            is FormScreenEvent.OnCameraButtonClicked -> {
+            is FormScreenEvent.OnPhotoTaken -> {
                 val currentData = _localParameterValueMap.value[event.elementId]?.value.orEmpty()
                 val updatedData = if (currentData.isBlank()) {
                     event.data
@@ -323,15 +323,29 @@ class FormScreenViewModel : ViewModel() {
 
             is FormScreenEvent.OnPhotoDeleteButtonClicked -> {
                 val currentData = _localParameterValueMap.value[event.elementId]?.value.orEmpty()
-                val updatedData = currentData.split("&").toMutableList().apply {
-                    if (event.index in indices) {
-                        removeAt(event.index)
-                    }
-                }.joinToString(separator = "&")
-
-                _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
-                    put(event.elementId, InputWrapper(value = updatedData, errorMessage = ""))
+                val imageList = provideImageList(value = currentData).toMutableList()
+                if (event.index in imageList.indices) {
+                    imageList.removeAt(event.index)
                 }
+                var updatedString = ""
+                imageList.forEach { image ->
+                    updatedString = when {
+                        updatedString.isEmpty() -> image
+                        image.contains("http") -> "$updatedString,$image"
+                        else -> "$updatedString&$image"
+                    }
+                }
+
+                _localParameterValueMap.value =
+                    _localParameterValueMap.value.toMutableMap().apply {
+                        put(
+                            event.elementId,
+                            InputWrapper(
+                                value = updatedString,
+                                errorMessage = ""
+                            )
+                        )
+                    }
             }
         }
     }
@@ -392,6 +406,33 @@ class FormScreenViewModel : ViewModel() {
 
         _dependentOperatorMap.value = tempDependentOperatorMap
         _dependentValueMap.value = tempDependentValueMap
+    }
+
+    fun provideImageList(value: String): List<String> {
+        val imageList = mutableListOf<String>()
+
+        if (value.contains("https")) {
+            value.split(",https")
+                .map { if (!it.startsWith("https")) "https$it" else it }
+                .let { imageList.addAll(it) }
+        } else if (value.isNotEmpty()) {
+            value.split("&")
+                .map { if (!it.startsWith("[")) "[$it" else it }
+                .let { imageList.addAll(it) }
+        }
+
+        val updatedImageList = imageList.flatMap { image ->
+            if (image.contains("&[")) {
+                image.split("&[")
+                    .map { if (!it.startsWith("https")) "[$it" else it }
+            } else {
+                listOf(image)
+            }
+        }
+
+        imageList.clear()
+        imageList.addAll(updatedImageList)
+        return imageList
     }
 
     private suspend fun remoteApi(

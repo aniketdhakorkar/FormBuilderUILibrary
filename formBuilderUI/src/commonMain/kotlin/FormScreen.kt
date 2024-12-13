@@ -30,7 +30,6 @@ import coil3.memory.MemoryCache
 import coil3.request.CachePolicy
 import coil3.request.crossfade
 import coil3.util.DebugLogger
-import kotlinx.coroutines.CoroutineScope
 import ui.component.CreateDropdown
 import ui.component.CreateLabel
 import ui.component.CreateTextField
@@ -51,7 +50,7 @@ fun FormScreen(
     visibilityMap: Map<Int, Boolean>,
     onClick: (Map<Int, InputWrapper>) -> Unit,
     enabledStatusMap: Map<Int, Boolean>,
-    isSubmitButtonVisible: Boolean,
+    action: String,
     token: String
 ) {
 
@@ -100,6 +99,7 @@ fun FormScreen(
                 )
             }
         }) {
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -194,17 +194,16 @@ fun FormScreen(
                             }
 
                             "ElementImageUpload" -> {
-                                val delimiter = if (parameterValue.value.contains("https")) "," else "&"
-
                                 CreateCamera(
                                     question = question,
                                     description = description,
                                     isMandatory = isMandatory,
                                     style = style,
-                                    imageList = parameterValue.value.split(delimiter).toList(),
-                                    onCameraButtonClicked = {
+                                    imageList = viewModel.provideImageList(value = parameterValue.value),
+                                    action = action,
+                                    onPhotoTaken = {
                                         viewModel.onEvent(
-                                            FormScreenEvent.OnCameraButtonClicked(
+                                            FormScreenEvent.OnPhotoTaken(
                                                 elementId = parameter.second.elementId,
                                                 data = it
                                             )
@@ -224,7 +223,7 @@ fun FormScreen(
                     }
                 }
 
-                if (isSubmitButtonVisible)
+                if (action != "view")
                     SubmitButton(showProgressIndicator = showProgressIndicator, onClick = {
                         viewModel.onEvent(FormScreenEvent.OnSubmitButtonClicked(onClick = onClick))
                     })
