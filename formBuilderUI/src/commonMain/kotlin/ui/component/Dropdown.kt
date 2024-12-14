@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.toSize
+import kotlinx.serialization.json.Json
 import ui.helper.DropdownIcon
 import ui.helper.DropdownMenuComponent
 import ui.helper.bringIntoView
@@ -41,7 +42,8 @@ fun CreateDropdown(
     isVisible: Boolean,
     isEnabled: Boolean,
     focusManager: FocusManager,
-    cardBackgroundColor: Color = MaterialTheme.colorScheme.secondaryContainer
+    cardBackgroundColor: Color = MaterialTheme.colorScheme.secondaryContainer,
+    action: String = "add"
 ) {
     if (!isVisible) return
 
@@ -54,7 +56,12 @@ fun CreateDropdown(
     var textFieldSize by remember { mutableStateOf(Size.Zero) }
 
     // Set selected text based on dropdown value
-    selectedText = optionList.find { dropdownValue.value.toIntOrNull() == it.pValue }?.optionName ?: ""
+
+    selectedText =
+        if (action == "filter" && dropdownValue.value.isNotEmpty())
+            Json.decodeFromString<DropdownOption>(dropdownValue.value).optionName.toString()
+        else
+            optionList.find { dropdownValue.value.toIntOrNull() == it.pValue }?.optionName ?: ""
 
     CardContainer(cardBackgroundColor = cardBackgroundColor) {
         GenerateText(

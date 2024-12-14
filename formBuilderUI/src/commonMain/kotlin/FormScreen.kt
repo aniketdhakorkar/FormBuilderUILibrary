@@ -77,7 +77,8 @@ fun FormScreen(
                 parameterMap = parameterMap,
                 visibilityMap = visibilityMap,
                 enabledStatusMap = enabledStatusMap,
-                token = token
+                token = token,
+                action = action
             )
     }
 
@@ -189,7 +190,8 @@ fun FormScreen(
                                     },
                                     isVisible = isVisible,
                                     isEnabled = isEnabled,
-                                    focusManager = focusManager
+                                    focusManager = focusManager,
+                                    action = action
                                 )
                             }
 

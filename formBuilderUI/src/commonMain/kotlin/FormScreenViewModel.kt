@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import model.filter.FilterResponseDto
 import model.filter.toDropdown
@@ -56,6 +58,7 @@ class FormScreenViewModel : ViewModel() {
     private var _token: String = ""
     private val _showProgressIndicator = MutableStateFlow(false)
     val showProgressIndicator = _showProgressIndicator.asStateFlow()
+    private var _action = ""
     private val _uiEvent = Channel<String>()
     val uiEvent = _uiEvent.receiveAsFlow()
 
@@ -79,7 +82,12 @@ class FormScreenViewModel : ViewModel() {
                 _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
                     put(
                         event.elementId,
-                        InputWrapper(value = event.option.pValue.toString(), errorMessage = "")
+                        InputWrapper(
+                            value = if (_action == "filter")
+                                Json.encodeToString<DropdownOption>(event.option)
+                            else event.option.pValue.toString(),
+                            errorMessage = ""
+                        )
                     )
                 }
 
@@ -92,10 +100,15 @@ class FormScreenViewModel : ViewModel() {
                                 var filterMap: Map<String, String> = emptyMap()
                                 it.parameter.forEach { (key, value) ->
                                     filterMap = filterMap.toMutableMap().apply {
+                                        val pValue = if (_action == "filter")
+                                            Json.decodeFromString<DropdownOption>(
+                                                _localParameterValueMap.value[value]?.value ?: ""
+                                            ).pValue.toString()
+                                        else
+                                            _localParameterValueMap.value[value]?.value ?: "0"
                                         put(
                                             key = key,
-                                            value = _localParameterValueMap.value[value]?.value
-                                                ?: "0"
+                                            value = pValue
                                         )
                                     }
 
@@ -355,13 +368,15 @@ class FormScreenViewModel : ViewModel() {
         parameterMap: Map<Int, ChildrenX>,
         visibilityMap: Map<Int, Boolean>,
         enabledStatusMap: Map<Int, Boolean>,
-        token: String
+        token: String,
+        action: String
     ) {
         _localParameterValueMap.value = parameterValueMap
         _localParameterMap.value = parameterMap
         _localVisibilityStatusMap.value = visibilityMap
         _localEnabledStatusMap.value = enabledStatusMap
         _token = token
+        _action = action
         val tempDependentValueMap = _dependentValueMap.value.toMutableMap()
         val tempDependentOperatorMap = _dependentOperatorMap.value.toMutableMap()
 

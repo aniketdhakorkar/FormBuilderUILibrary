@@ -76,7 +76,7 @@ class MainActivity : ComponentActivity() {
                                     append("app_type", "1")
                                     append("project_id", "6")
                                     append("program_id", "10")
-                                    append("category_id", "3")
+                                    append("category_id", "7")
                                 }
                             )
                         )
