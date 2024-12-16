@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import co.touchlab.kermit.Logger
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
@@ -65,9 +66,9 @@ fun FormScreen(
     val localVisibilityStatusMap by viewModel.localVisibilityStatusMap.collectAsState()
     val localEnabledStatusMap by viewModel.localEnabledStatusMap.collectAsState()
     val dependentValueMap by viewModel.dependentValueMap.collectAsState()
-    val onlineDropdownOptionMap by viewModel.onlineDropdownOptionMap.collectAsState()
     val focusManager = LocalFocusManager.current
     val showProgressIndicator by viewModel.showProgressIndicator.collectAsState()
+    val searchText by viewModel.searchText.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(parameterMap) {
@@ -99,12 +100,12 @@ fun FormScreen(
                     shape = RoundedCornerShape(8.dp)
                 )
             }
-        }) {
+        }) { innerPadding ->
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 64.dp)
+                    .padding(innerPadding)
                     .background(color = MaterialTheme.colorScheme.background),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -123,8 +124,6 @@ fun FormScreen(
                         val description = parameter.second.elementTooltip.en ?: ""
                         val isMandatory = parameter.second.isRequired
                         val style = parameter.second.style
-                        val isOnlineDropdownOption =
-                            onlineDropdownOptionMap[parameter.first]?.isNotEmpty() ?: false
 
                         when (parameter.second.elementType) {
                             "ElementLabel" -> CreateLabel(
@@ -169,16 +168,19 @@ fun FormScreen(
                             }
 
                             "ElementDropDown" -> {
-
+                                Logger.d("listSize") {
+                                    parameter.second.elementData.options.size.toString()
+                                }
                                 CreateDropdown(
                                     question = question,
                                     description = description,
                                     isMandatory = isMandatory,
                                     style = style,
-                                    optionList = if (isOnlineDropdownOption)
-                                        onlineDropdownOptionMap[parameter.first] ?: emptyList()
-                                    else
-                                        parameter.second.elementData.options.map { it.toDropdown() },
+                                    isVisible = isVisible,
+                                    isEnabled = isEnabled,
+                                    focusManager = focusManager,
+                                    action = action,
+                                    optionList = parameter.second.elementData.options.map { it.toDropdown() },
                                     dropdownValue = parameterValue,
                                     onValueChanged = { option ->
                                         viewModel.onEvent(
@@ -188,10 +190,15 @@ fun FormScreen(
                                             )
                                         )
                                     },
-                                    isVisible = isVisible,
-                                    isEnabled = isEnabled,
-                                    focusManager = focusManager,
-                                    action = action
+                                    onSearchValueChanged = {
+                                        viewModel.onEvent(
+                                            FormScreenEvent.OnSearchValueChanged(
+                                                elementId = parameter.second.elementId,
+                                                searchText = it
+                                            )
+                                        )
+                                    },
+                                    searchText = searchText
                                 )
                             }
 

@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ElementData(
     @SerialName("options")
-    val options: List<Options>,
+    var options: List<Options>,
     @SerialName("data_url")
     val dataUrl: String? = null,
     @SerialName("method")

@@ -20,7 +20,7 @@ fun App(
             enabledStatusMap = enabledStatusMap,
             onClick = {},
             action = "add",
-            token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM0MTYxMjUxLCJpYXQiOjE3MzQxNTc2NTEsImp0aSI6ImY2YTNiNGFlZjdjZDQ0YWE5ZWQ0MTcxZDk0ODk4NmRmIiwidXNlcl9pZCI6NjZ9.rH2dNkLf4y7VYog__ZvTwDbDj9X0XWKJF1LQ4CU64po"
+            token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM0MzQyNjMxLCJpYXQiOjE3MzQzMzkwMzEsImp0aSI6IjU1OTZjYTMxNDc4YzRkMzViODAyY2I5OTRkZDczMjIxIiwidXNlcl9pZCI6NjZ9.wVuQmmaQ5SV7AsDXsYuiVg2yk8lkxT-C4s_e6ATs_gg"
         )
     }
 }

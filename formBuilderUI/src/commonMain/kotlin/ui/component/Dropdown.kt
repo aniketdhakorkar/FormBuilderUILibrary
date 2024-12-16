@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.toSize
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import ui.helper.DropdownIcon
 import ui.helper.DropdownMenuComponent
@@ -39,6 +40,8 @@ fun CreateDropdown(
     optionList: List<DropdownOption>,
     dropdownValue: InputWrapper,
     onValueChanged: (DropdownOption) -> Unit,
+    onSearchValueChanged: (String) -> Unit,
+    searchText: String,
     isVisible: Boolean,
     isEnabled: Boolean,
     focusManager: FocusManager,
@@ -59,7 +62,7 @@ fun CreateDropdown(
 
     selectedText =
         if (action == "filter" && dropdownValue.value.isNotEmpty())
-            Json.decodeFromString<DropdownOption>(dropdownValue.value).optionName.toString()
+            Json.decodeFromString<DropdownOption>(dropdownValue.value).optionName
         else
             optionList.find { dropdownValue.value.toIntOrNull() == it.pValue }?.optionName ?: ""
 
@@ -133,7 +136,9 @@ fun CreateDropdown(
                     focusRequester.requestFocus()
                     bringIntoView(coroutineScope, bringIntoViewRequester)
                 },
-                onDismissRequest = { expanded = false }
+                onDismissRequest = { expanded = false },
+                onSearchValueChanged = onSearchValueChanged,
+                searchText = searchText
             )
         }
     }

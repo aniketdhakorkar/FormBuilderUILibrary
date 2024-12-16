@@ -13,22 +13,28 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.get
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import model.filter.FilterResponseDto
-import model.filter.toDropdown
 import util.DependentValueCustomText
 import util.InputWrapper
 import util.SendUiEvent
 import model.parameters.ChildrenX
 import model.DropdownOption
+import model.filter.toOption
+import model.parameters.toDropdown
 import validation.calculateRemainingValuesForFocusChange
 import validation.calculateRemainingValuesForValueChange
 import validation.checkMobileNoValidation
@@ -36,10 +42,41 @@ import validation.expressionValidation
 import validation.hideAndShowValidation
 import validation.validateInputInRange
 
+@OptIn(FlowPreview::class)
 class FormScreenViewModel : ViewModel() {
 
+    private val _searchText = MutableStateFlow("")
+    val searchText = _searchText.asStateFlow()
+    private var elementId: Int = 0
     private val _localParameterMap = MutableStateFlow<Map<Int, ChildrenX>>(emptyMap())
-    val localParameterMap = _localParameterMap.asStateFlow()
+    val localParameterMap = searchText
+        .debounce(1000L)
+        .combine(_localParameterMap) { text, parameterMap ->
+            if (text.isBlank()) {
+                parameterMap
+            } else {
+                parameterMap.mapValues { (id, childrenX) ->
+                    if (id == elementId) {
+                        val filteredOptions = childrenX.elementData.options.filter {
+                            it.toDropdown().doesMatchSearchQuery(text)
+                        }.toList()
+
+                        childrenX.copy(
+                            elementData = childrenX.elementData.copy(
+                                options = filteredOptions
+                            )
+                        )
+                    } else {
+                        childrenX
+                    }
+                }
+            }
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            _localParameterMap.value
+        )
     private val _localParameterValueMap =
         MutableStateFlow<Map<Int, InputWrapper>>(emptyMap())
     val localParameterValueMap = _localParameterValueMap.asStateFlow()
@@ -52,9 +89,6 @@ class FormScreenViewModel : ViewModel() {
     private val _dependentValueMap =
         MutableStateFlow<Map<Int, DependentValueCustomText>>(emptyMap())
     val dependentValueMap = _dependentValueMap.asStateFlow()
-    private val _onlineDropdownOptionMap =
-        MutableStateFlow<Map<Int, List<DropdownOption>>>(emptyMap())
-    val onlineDropdownOptionMap = _onlineDropdownOptionMap.asStateFlow()
     private var _token: String = ""
     private val _showProgressIndicator = MutableStateFlow(false)
     val showProgressIndicator = _showProgressIndicator.asStateFlow()
@@ -360,6 +394,11 @@ class FormScreenViewModel : ViewModel() {
                         )
                     }
             }
+
+            is FormScreenEvent.OnSearchValueChanged -> {
+                elementId = event.elementId
+                _searchText.value = event.searchText
+            }
         }
     }
 
@@ -482,12 +521,13 @@ class FormScreenViewModel : ViewModel() {
         }
 
         try {
-            _onlineDropdownOptionMap.value = _onlineDropdownOptionMap.value.toMutableMap().apply {
-                put(
-                    elementId,
-                    result.body<FilterResponseDto>().data?.map { it.toDropdown() } ?: emptyList()
-                )
+            _localParameterMap.value = _localParameterMap.value.toMutableMap().apply {
+                this[elementId]?.elementData?.options =
+                    result.body<FilterResponseDto>().data?.map { it.toOption() } ?: emptyList()
             }
+            _searchText.value = "-"
+            delay(1000)
+            _searchText.value = ""
             httpClient.close()
         } catch (e: Exception) {
             throw Exception("Failed to parse the response. Please try again later.", e)
