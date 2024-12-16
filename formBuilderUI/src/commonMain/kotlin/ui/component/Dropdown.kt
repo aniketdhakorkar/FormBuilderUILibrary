@@ -46,7 +46,8 @@ fun CreateDropdown(
     isEnabled: Boolean,
     focusManager: FocusManager,
     cardBackgroundColor: Color = MaterialTheme.colorScheme.secondaryContainer,
-    action: String = "add"
+    action: String = "add",
+    isSearch: Boolean = false
 ) {
     if (!isVisible) return
 
@@ -138,7 +139,8 @@ fun CreateDropdown(
                 },
                 onDismissRequest = { expanded = false },
                 onSearchValueChanged = onSearchValueChanged,
-                searchText = searchText
+                searchText = searchText,
+                isSearch = isSearch
             )
         }
     }

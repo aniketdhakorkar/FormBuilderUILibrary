@@ -38,7 +38,8 @@ fun DropdownMenuComponent(
     searchText: String,
     onClick: (DropdownOption) -> Unit,
     onDismissRequest: () -> Unit,
-    onSearchValueChanged: (String) -> Unit
+    onSearchValueChanged: (String) -> Unit,
+    isSearch: Boolean = false
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -46,43 +47,44 @@ fun DropdownMenuComponent(
         modifier = Modifier.width(with(LocalDensity.current) { textFieldSize.width.toDp() }),
         properties = PopupProperties(focusable = true)
     ) {
-        OutlinedTextField(
-            value = searchText,
-            onValueChange = onSearchValueChanged,
-            placeholder = {
-                Text(
-                    text = "Search...",
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                focusedBorderColor = MaterialTheme.colorScheme.primary
-            ),
-            shape = RoundedCornerShape(16.dp),
-            trailingIcon = {
-                if (searchText.isNotEmpty()) {
-                    IconButton(onClick = { onSearchValueChanged("") }) {
+        if (isSearch)
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = onSearchValueChanged,
+                placeholder = {
+                    Text(
+                        text = "Search...",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(16.dp),
+                trailingIcon = {
+                    if (searchText.isNotEmpty()) {
+                        IconButton(onClick = { onSearchValueChanged("") }) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Clear Search"
+                            )
+                        }
+                    } else {
                         Icon(
-                            imageVector = Icons.Filled.Close,
-                            contentDescription = "Clear Search"
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "Search"
                         )
                     }
-                } else {
-                    Icon(
-                        imageVector = Icons.Filled.Search,
-                        contentDescription = "Search"
-                    )
-                }
-            },
-            textStyle = MaterialTheme.typography.bodySmall
-        )
+                },
+                textStyle = MaterialTheme.typography.bodySmall
+            )
 
         optionList.forEach { option ->
             val isSelected = dropdownValue.toIntOrNull() == option.optionId
