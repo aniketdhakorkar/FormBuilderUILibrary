@@ -124,7 +124,7 @@ fun FormScreen(
                         val description = parameter.second.elementTooltip.en ?: ""
                         val isMandatory = parameter.second.isRequired
                         val style = parameter.second.style
-                        val isSearch = parameter.second.databaseParam == "school"
+                        val isSearch = parameter.second.elementType == "ElementDropDownSearch"
 
                         when (parameter.second.elementType) {
                             "ElementLabel" -> CreateLabel(
@@ -168,7 +168,8 @@ fun FormScreen(
                                 )
                             }
 
-                            "ElementDropDown" -> {
+                            "ElementDropDown",
+                            "ElementDropDownSearch" -> {
                                 CreateDropdown(
                                     question = question,
                                     description = description,
