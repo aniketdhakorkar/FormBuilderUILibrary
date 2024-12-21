@@ -11,7 +11,16 @@ import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.onUpload
+import io.ktor.client.request.forms.FormDataContent
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
+import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
@@ -33,7 +42,10 @@ import util.InputWrapper
 import util.SendUiEvent
 import model.parameters.ChildrenX
 import model.DropdownOption
+import model.ImageModel
 import model.filter.toOption
+import model.image.ImagePreSignedUrlResponseDto
+import model.image.SaveImageResponseDto
 import model.parameters.toDropdown
 import validation.calculateRemainingValuesForFocusChange
 import validation.calculateRemainingValuesForValueChange
@@ -92,6 +104,10 @@ class FormScreenViewModel : ViewModel() {
     private var _token: String = ""
     private val _showProgressIndicator = MutableStateFlow(false)
     val showProgressIndicator = _showProgressIndicator.asStateFlow()
+    private val _imageList = MutableStateFlow<Map<Int, List<ImageModel>>>(emptyMap())
+    val imageList = _imageList.asStateFlow()
+    private var _activity = ""
+    private var _form = ""
     private var _action = ""
     private val _uiEvent = Channel<String>()
     val uiEvent = _uiEvent.receiveAsFlow()
@@ -355,44 +371,91 @@ class FormScreenViewModel : ViewModel() {
             }
 
             is FormScreenEvent.OnPhotoTaken -> {
-                val currentData = _localParameterValueMap.value[event.elementId]?.value.orEmpty()
-                val updatedData = if (currentData.isBlank()) {
-                    event.data
-                } else {
-                    "$currentData&${event.data}"
-                }
+                viewModelScope.launch {
+                    val updatedList =
+                        (_imageList.value[event.elementId]?.toMutableList()
+                            ?: mutableListOf()).apply {
+                            add(event.image)
+                        }
 
-                _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
-                    put(event.elementId, InputWrapper(value = updatedData, errorMessage = ""))
-                }
+                    _imageList.value = _imageList.value.toMutableMap().apply {
+                        put(event.elementId, updatedList)
+                    }
 
+                    var saveImageResponse: SaveImageResponseDto? = null
+                    try {
+                        saveImageResponse = saveImageApi(
+                            image = event.image,
+                            token = _token
+                        )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        val updatedImageList = _imageList.value.toMutableMap().apply {
+                            remove(_imageList.value.keys.last())
+                        }
+                        _imageList.value = updatedImageList
+
+                        SendUiEvent.send(
+                            viewModelScope = viewModelScope,
+                            _uiEvent = _uiEvent,
+                            event = "An error occurred while uploading your image.\nPlease check your internet connection and try again."
+                        )
+                    }
+
+                    if (saveImageResponse != null && saveImageResponse.status == "success") {
+
+                        try {
+                            val urlResponse = getImagePreSignedUrl(
+                                urls = saveImageResponse.resourcePaths,
+                                token = _token
+                            )
+
+                            _imageList.value = _imageList.value.mapValues { (key, imageList) ->
+                                imageList.map { imageModel ->
+                                    if (imageModel.byteImage != null) {
+                                        imageModel.copy(
+                                            byteImage = null,
+                                            isLoading = false,
+                                            resourcePath = urlResponse,
+                                            resourceId = saveImageResponse.resourceId
+                                        )
+                                    } else {
+                                        imageModel
+                                    }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+
+                            _imageList.value = _imageList.value.mapValues { (key, imageList) ->
+                                imageList.map { imageModel ->
+                                    if (imageModel.byteImage != null) {
+                                        imageModel.copy(
+                                            byteImage = null,
+                                            isLoading = false,
+                                            resourcePath = saveImageResponse.resourcePaths,
+                                            resourceId = saveImageResponse.resourceId
+                                        )
+                                    } else {
+                                        imageModel
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             is FormScreenEvent.OnPhotoDeleteButtonClicked -> {
-                val currentData = _localParameterValueMap.value[event.elementId]?.value.orEmpty()
-                val imageList = provideImageList(value = currentData).toMutableList()
-                if (event.index in imageList.indices) {
-                    imageList.removeAt(event.index)
-                }
-                var updatedString = ""
-                imageList.forEach { image ->
-                    updatedString = when {
-                        updatedString.isEmpty() -> image
-                        image.contains("http") -> "$updatedString,$image"
-                        else -> "$updatedString&$image"
+                val updatedImageList = _imageList.value.toMutableMap().apply {
+                    this[event.elementId]?.let { imageList ->
+                        val updatedList = imageList.toMutableList()
+                        updatedList.removeAt(event.index)
+                        this[event.elementId] = updatedList
                     }
                 }
+                _imageList.value = updatedImageList
 
-                _localParameterValueMap.value =
-                    _localParameterValueMap.value.toMutableMap().apply {
-                        put(
-                            event.elementId,
-                            InputWrapper(
-                                value = updatedString,
-                                errorMessage = ""
-                            )
-                        )
-                    }
             }
 
             is FormScreenEvent.OnSearchValueChanged -> {
@@ -407,6 +470,8 @@ class FormScreenViewModel : ViewModel() {
         parameterMap: Map<Int, ChildrenX>,
         visibilityMap: Map<Int, Boolean>,
         enabledStatusMap: Map<Int, Boolean>,
+        activity: String,
+        form: String,
         token: String,
         action: String
     ) {
@@ -416,6 +481,8 @@ class FormScreenViewModel : ViewModel() {
         _localEnabledStatusMap.value = enabledStatusMap
         _token = token
         _action = action
+        _activity = activity
+        _form = form
         val tempDependentValueMap = _dependentValueMap.value.toMutableMap()
         val tempDependentOperatorMap = _dependentOperatorMap.value.toMutableMap()
 
@@ -462,33 +529,6 @@ class FormScreenViewModel : ViewModel() {
         _dependentValueMap.value = tempDependentValueMap
     }
 
-    fun provideImageList(value: String): List<String> {
-        val imageList = mutableListOf<String>()
-
-        if (value.contains("https")) {
-            value.split(",https")
-                .map { if (!it.startsWith("https")) "https$it" else it }
-                .let { imageList.addAll(it) }
-        } else if (value.isNotEmpty()) {
-            value.split("&")
-                .map { if (!it.startsWith("[")) "[$it" else it }
-                .let { imageList.addAll(it) }
-        }
-
-        val updatedImageList = imageList.flatMap { image ->
-            if (image.contains("&[")) {
-                image.split("&[")
-                    .map { if (!it.startsWith("https")) "[$it" else it }
-            } else {
-                listOf(image)
-            }
-        }
-
-        imageList.clear()
-        imageList.addAll(updatedImageList)
-        return imageList
-    }
-
     private suspend fun remoteApi(
         url: String,
         filterMap: Map<String, String>,
@@ -532,6 +572,101 @@ class FormScreenViewModel : ViewModel() {
         } catch (e: Exception) {
             throw Exception("Failed to parse the response. Please try again later.", e)
         }
+    }
+
+    private suspend fun saveImageApi(
+        image: ImageModel,
+        token: String
+    ): SaveImageResponseDto {
+        val httpClient = provideHttpClient(token = token)
+        val saveImageResponseDto: SaveImageResponseDto?
+
+        val result = try {
+            httpClient.post("https://enable.prathamapps.com/api/resource/upload/") {
+                setBody(
+                    MultiPartFormDataContent(
+                        formData {
+                            append("activity", _activity)
+                            append("form", _form)
+                            append(
+                                key = "resource",
+                                value = image.byteImage ?: byteArrayOf(),
+                                headers = Headers.build {
+                                    append(HttpHeaders.ContentType, "image/png")
+                                    append(
+                                        HttpHeaders.ContentDisposition,
+                                        "filename=\"image.png\""
+                                    )
+                                })
+                        },
+                        boundary = "WebAppBoundary"
+                    )
+                )
+                onUpload { bytesSentTotal, contentLength ->
+                    println("Sent $bytesSentTotal bytes from $contentLength")
+                }
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            throw Exception("Network error occurred. Please check your internet connection and try again.")
+        }
+
+        when (result.status.value) {
+            in 200..299 -> Unit
+            500 -> throw Exception("Internal server error. Please try again later.")
+            in 400..499 -> {
+                throw Exception("Client error: ${result.body<SaveImageResponseDto>().errors?.detail}")
+            }
+
+            else -> throw Exception("An unknown error occurred. Please try again.")
+        }
+
+        try {
+            saveImageResponseDto = result.body<SaveImageResponseDto>()
+            httpClient.close()
+        } catch (e: Exception) {
+            throw Exception("Failed to parse the response. Please try again later.", e)
+        }
+        return saveImageResponseDto
+    }
+
+    private suspend fun getImagePreSignedUrl(urls: String, token: String): String {
+        val httpClient = provideHttpClient(token = token)
+        val imageUrl: String
+
+        val result = try {
+            httpClient.post("https://enable.prathamapps.com/api/child_profile/presignedurl/") {
+                setBody(
+                    FormDataContent(
+                        parameters {
+                            append("file_paths", urls)
+                        }
+                    )
+                )
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            throw Exception("Network error occurred. Please check your internet connection and try again.")
+        }
+
+        when (result.status.value) {
+            in 200..299 -> Unit
+            500 -> throw Exception("Internal server error. Please try again later.")
+            in 400..499 -> {
+                throw Exception("Client error: ${result.body<ImagePreSignedUrlResponseDto>().detail}")
+            }
+
+            else -> throw Exception("An unknown error occurred. Please try again.")
+        }
+
+        try {
+            imageUrl = result.body<ImagePreSignedUrlResponseDto>().urls?.joinToString(",") ?: ""
+            httpClient.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw Exception("Failed to parse the response. Please try again later.")
+        }
+        return imageUrl
     }
 
     private fun provideHttpClient(token: String): HttpClient = HttpClient {

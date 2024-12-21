@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,8 +51,7 @@ import cameraK.result.ImageCaptureResult
 import cameraK.ui.CameraPreview
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import model.ImageModel
 import model.parameters.Style
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.decodeToImageBitmap
@@ -64,19 +63,17 @@ fun CreateCamera(
     description: String,
     style: Style?,
     isMandatory: String,
-    imageList: List<String>,
+    imageList: List<ImageModel>,
     action: String,
-    onPhotoTaken: (String) -> Unit,
+    onPhotoTaken: (ImageModel) -> Unit,
     onPhotoDeleteButtonClicked: (Int) -> Unit
 ) {
-    var scale by remember { mutableFloatStateOf(1f) }
-    var offset by remember { mutableStateOf(Offset.Zero) }
+
     val permissions = providePermissions()
     val cameraPermissionState = remember { mutableStateOf(permissions.hasCameraPermission()) }
     val cameraController = remember { mutableStateOf<CameraController?>(null) }
     val isOpenCamera = remember { mutableStateOf(false) }
     val isViewCamera = remember { mutableStateOf(false) }
-    val imageIndex = remember { mutableIntStateOf(0) }
 
     if (!cameraPermissionState.value) {
         permissions.RequestCameraPermission(
@@ -92,16 +89,25 @@ fun CreateCamera(
             isMandatory = isMandatory,
             parameterDescription = description
         )
+
         LazyRow(verticalAlignment = Alignment.CenterVertically) {
-            itemsIndexed(imageList) { index, image ->
+            itemsIndexed(imageList.toList()) { index, image ->
                 DisplayImageItem(
                     image = image,
                     index = index,
-                    isViewCamera = isViewCamera,
-                    imageIndex = imageIndex,
                     action = action,
-                    onPhotoDeleteButtonClicked = onPhotoDeleteButtonClicked
+                    onPhotoDeleteButtonClicked = onPhotoDeleteButtonClicked,
+                    onPhotoClicked = {
+                        isViewCamera.value = true
+                    }
                 )
+
+                if (isViewCamera.value) {
+                    ImagePreviewDialog(
+                        imageModel = image,
+                        onDismiss = { isViewCamera.value = false }
+                    )
+                }
             }
             item {
                 AddPhotoButton { isOpenCamera.value = true }
@@ -116,32 +122,17 @@ fun CreateCamera(
             onCameraButtonClicked = onPhotoTaken
         )
     }
-
-    if (isViewCamera.value) {
-        ImagePreviewDialog(
-            isViewCamera = isViewCamera,
-            imageList = imageList,
-            imageIndex = imageIndex,
-            scale = scale,
-            offset = offset,
-            onScaleChange = { scale = it },
-            onOffsetChange = { offset = it }
-        )
-    }
 }
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun DisplayImageItem(
-    image: String,
+    image: ImageModel,
     index: Int,
-    isViewCamera: MutableState<Boolean>,
-    imageIndex: MutableState<Int>,
     action: String,
-    onPhotoDeleteButtonClicked: (Int) -> Unit
+    onPhotoDeleteButtonClicked: (Int) -> Unit,
+    onPhotoClicked: () -> Unit
 ) {
-    val bitmap = if (!image.contains("https")) Json.decodeFromString<ByteArray>(image)
-        .decodeToImageBitmap() else null
 
     Box(
         modifier = Modifier
@@ -150,21 +141,23 @@ fun DisplayImageItem(
             .padding(end = 8.dp)
             .clip(RoundedCornerShape(8.dp))
             .clickable {
-                isViewCamera.value = true
-                imageIndex.value = index
+                onPhotoClicked()
             }
             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)),
         contentAlignment = Alignment.Center
     ) {
-        if (bitmap != null) {
+        if (image.byteImage != null) {
             Image(
                 contentScale = ContentScale.FillBounds,
-                bitmap = bitmap,
+                bitmap = image.byteImage.decodeToImageBitmap(),
                 contentDescription = null
             )
         } else {
-            AsyncImage(model = image, contentDescription = null)
+            AsyncImage(model = image.resourcePath, contentDescription = null)
         }
+
+        if (image.isLoading)
+            CircularProgressIndicator()
 
         if (action != "view")
             IconButton(
@@ -218,7 +211,7 @@ fun AddPhotoButton(onClick: () -> Unit) {
 fun CameraDialog(
     isOpenCamera: MutableState<Boolean>,
     cameraController: MutableState<CameraController?>,
-    onCameraButtonClicked: (String) -> Unit
+    onCameraButtonClicked: (ImageModel) -> Unit
 ) {
     CreateDialogBox(
         onDismissRequest = { isOpenCamera.value = false },
@@ -233,7 +226,6 @@ fun CameraDialog(
                 },
                 onCameraControllerReady = {
                     cameraController.value = it
-                    println("Camera Controller Ready ${cameraController.value}")
                 }
             )
             cameraController.value?.let { controller ->
@@ -248,17 +240,12 @@ fun CameraDialog(
 }
 
 @Composable
-fun ImagePreviewDialog(
-    isViewCamera: MutableState<Boolean>,
-    imageList: List<String>,
-    imageIndex: MutableState<Int>,
-    scale: Float,
-    offset: Offset,
-    onScaleChange: (Float) -> Unit,
-    onOffsetChange: (Offset) -> Unit
-) {
+fun ImagePreviewDialog(imageModel: ImageModel, onDismiss: () -> Unit) {
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+
     CreateDialogBox(
-        onDismissRequest = { isViewCamera.value = false },
+        onDismissRequest = onDismiss,
         content = {
             BoxWithConstraints(contentAlignment = Alignment.Center) {
                 val state = rememberTransformableState { zoomChange, panChange, _ ->
@@ -268,12 +255,10 @@ fun ImagePreviewDialog(
                     val maxX = extraWidth / 2
                     val maxY = extraHeight / 2
 
-                    onScaleChange(newScale)
-                    onOffsetChange(
-                        Offset(
-                            x = (offset.x + newScale * panChange.x).coerceIn(-maxX, maxX),
-                            y = (offset.y + newScale * panChange.y).coerceIn(-maxY, maxY)
-                        )
+                    scale = newScale
+                    offset = Offset(
+                        x = (offset.x + newScale * panChange.x).coerceIn(-maxX, maxX),
+                        y = (offset.y + newScale * panChange.y).coerceIn(-maxY, maxY)
                     )
                 }
 
@@ -286,7 +271,7 @@ fun ImagePreviewDialog(
                             translationY = offset.y
                         }
                         .transformable(state),
-                    model = imageList[imageIndex.value],
+                    model = imageModel.resourcePath,
                     contentDescription = null
                 )
             }
@@ -298,7 +283,7 @@ fun ImagePreviewDialog(
 fun CameraScreen(
     cameraController: CameraController,
     onCloseButtonClicked: () -> Unit,
-    onCameraButtonClicked: (String) -> Unit
+    onCameraButtonClicked: (ImageModel) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     var isFlashOn by remember { mutableStateOf(false) }
@@ -335,8 +320,7 @@ fun CameraScreen(
                             scope.launch {
                                 when (val result = cameraController.takePicture()) {
                                     is ImageCaptureResult.Success -> {
-                                        val res = Json.encodeToString(result.byteArray)
-                                        onCameraButtonClicked(res)
+                                        onCameraButtonClicked(ImageModel(byteImage = result.byteArray))
                                         onCloseButtonClicked()
                                     }
 

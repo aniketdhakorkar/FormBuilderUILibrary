@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import co.touchlab.kermit.Logger
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
@@ -51,6 +50,8 @@ fun FormScreen(
     visibilityMap: Map<Int, Boolean>,
     onClick: (Map<Int, InputWrapper>) -> Unit,
     enabledStatusMap: Map<Int, Boolean>,
+    activity: String,
+    form: String,
     action: String,
     token: String
 ) {
@@ -67,6 +68,7 @@ fun FormScreen(
     val localEnabledStatusMap by viewModel.localEnabledStatusMap.collectAsState()
     val dependentValueMap by viewModel.dependentValueMap.collectAsState()
     val focusManager = LocalFocusManager.current
+    val imageList by viewModel.imageList.collectAsState()
     val showProgressIndicator by viewModel.showProgressIndicator.collectAsState()
     val searchText by viewModel.searchText.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -78,6 +80,8 @@ fun FormScreen(
                 parameterMap = parameterMap,
                 visibilityMap = visibilityMap,
                 enabledStatusMap = enabledStatusMap,
+                activity = activity,
+                form = form,
                 token = token,
                 action = action
             )
@@ -116,6 +120,7 @@ fun FormScreen(
                 ) {
                     items(localParameterMap.toList()) { parameter ->
 
+                        val elementId = parameter.second.elementId
                         val parameterValue =
                             localParameterValueMap[parameter.first] ?: InputWrapper("")
                         val isVisible = localVisibilityStatusMap[parameter.first] ?: true
@@ -208,13 +213,13 @@ fun FormScreen(
                                     description = description,
                                     isMandatory = isMandatory,
                                     style = style,
-                                    imageList = viewModel.provideImageList(value = parameterValue.value),
+                                    imageList = imageList[elementId] ?: emptyList(),
                                     action = action,
                                     onPhotoTaken = {
                                         viewModel.onEvent(
                                             FormScreenEvent.OnPhotoTaken(
                                                 elementId = parameter.second.elementId,
-                                                data = it
+                                                image = it
                                             )
                                         )
                                     },
@@ -233,9 +238,12 @@ fun FormScreen(
                 }
 
                 if (action != "view")
-                    SubmitButton(showProgressIndicator = showProgressIndicator, onClick = {
-                        viewModel.onEvent(FormScreenEvent.OnSubmitButtonClicked(onClick = onClick))
-                    })
+                    SubmitButton(
+                        showProgressIndicator = showProgressIndicator,
+                        onClick = {
+                            viewModel.onEvent(FormScreenEvent.OnSubmitButtonClicked(onClick = onClick))
+                        }
+                    )
             }
         }
     }

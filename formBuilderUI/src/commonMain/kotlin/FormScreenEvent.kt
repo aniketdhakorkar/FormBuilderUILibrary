@@ -1,4 +1,5 @@
 import model.DropdownOption
+import model.ImageModel
 import util.InputWrapper
 
 sealed class FormScreenEvent {
@@ -14,7 +15,7 @@ sealed class FormScreenEvent {
     data class OnSubmitButtonClicked(val onClick: (Map<Int, InputWrapper>) -> Unit) :
         FormScreenEvent()
 
-    data class OnPhotoTaken(val elementId: Int, val data: String) : FormScreenEvent()
+    data class OnPhotoTaken(val elementId: Int, val image: ImageModel) : FormScreenEvent()
 
     data class OnPhotoDeleteButtonClicked(val elementId: Int, val index: Int) : FormScreenEvent()
 
