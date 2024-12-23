@@ -147,7 +147,7 @@ fun FormScreen(
                                     onValueChange = { value ->
                                         viewModel.onEvent(
                                             FormScreenEvent.OnTextFieldValueChanged(
-                                                elementId = parameter.second.elementId,
+                                                elementId = elementId,
                                                 value = value
                                             )
                                         )
@@ -162,13 +162,13 @@ fun FormScreen(
                                         if (parameter.second.inputType == "number") {
                                             viewModel.onEvent(
                                                 FormScreenEvent.OnTextFieldFocusChanged(
-                                                    elementId = parameter.second.elementId,
+                                                    elementId = elementId,
                                                     isFocused = it
                                                 )
                                             )
                                         }
                                     },
-                                    dependentValueCustomText = dependentValueMap[parameter.second.elementId]
+                                    dependentValueCustomText = dependentValueMap[elementId]
                                         ?: DependentValueCustomText()
                                 )
                             }
@@ -189,7 +189,7 @@ fun FormScreen(
                                     onValueChanged = { option ->
                                         viewModel.onEvent(
                                             FormScreenEvent.OnDropdownValueChanged(
-                                                elementId = parameter.second.elementId,
+                                                elementId = elementId,
                                                 option = option
                                             )
                                         )
@@ -197,7 +197,7 @@ fun FormScreen(
                                     onSearchValueChanged = {
                                         viewModel.onEvent(
                                             FormScreenEvent.OnSearchValueChanged(
-                                                elementId = parameter.second.elementId,
+                                                elementId = elementId,
                                                 searchText = it
                                             )
                                         )
@@ -218,7 +218,7 @@ fun FormScreen(
                                     onPhotoTaken = {
                                         viewModel.onEvent(
                                             FormScreenEvent.OnPhotoTaken(
-                                                elementId = parameter.second.elementId,
+                                                elementId = elementId,
                                                 image = it
                                             )
                                         )
@@ -226,8 +226,16 @@ fun FormScreen(
                                     onPhotoDeleteButtonClicked = {
                                         viewModel.onEvent(
                                             FormScreenEvent.OnPhotoDeleteButtonClicked(
-                                                elementId = parameter.second.elementId,
+                                                elementId = elementId,
                                                 index = it
+                                            )
+                                        )
+                                    },
+                                    onImageViewButtonClicked = {
+                                        viewModel.onEvent(
+                                            FormScreenEvent.OnImageViewButtonClicked(
+                                                elementId = elementId,
+                                                image = it
                                             )
                                         )
                                     }

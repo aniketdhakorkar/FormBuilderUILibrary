@@ -7,9 +7,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ImagePreSignedUrlResponseDto(
     @SerialName("status")
-    val status: String?,
+    val status: String,
     @SerialName("urls")
     val urls: List<String>?,
-    @SerialName("detail")
-    val detail: String? = null
+    @SerialName("message")
+    val message: String? = null
 )

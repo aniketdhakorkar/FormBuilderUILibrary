@@ -372,76 +372,54 @@ class FormScreenViewModel : ViewModel() {
 
             is FormScreenEvent.OnPhotoTaken -> {
                 viewModelScope.launch {
-                    val updatedList =
-                        (_imageList.value[event.elementId]?.toMutableList()
-                            ?: mutableListOf()).apply {
-                            add(event.image)
-                        }
+                    val currentImages =
+                        _imageList.value[event.elementId]?.toMutableList() ?: mutableListOf()
+                    currentImages.add(event.image)
 
                     _imageList.value = _imageList.value.toMutableMap().apply {
-                        put(event.elementId, updatedList)
+                        this[event.elementId] = currentImages
                     }
 
-                    var saveImageResponse: SaveImageResponseDto? = null
+                    val resourcePath: String?
+
                     try {
-                        saveImageResponse = saveImageApi(
-                            image = event.image,
-                            token = _token
-                        )
+                        resourcePath = saveImageApi(image = event.image, token = _token)
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        val updatedImageList = _imageList.value.toMutableMap().apply {
-                            remove(_imageList.value.keys.last())
+                        _imageList.value = _imageList.value.toMutableMap().apply {
+                            this[event.elementId] = currentImages.apply {
+                                if (isNotEmpty()) removeLast()
+                            }
                         }
-                        _imageList.value = updatedImageList
 
                         SendUiEvent.send(
                             viewModelScope = viewModelScope,
                             _uiEvent = _uiEvent,
                             event = "An error occurred while uploading your image.\nPlease check your internet connection and try again."
                         )
+                        return@launch
                     }
 
-                    if (saveImageResponse != null && saveImageResponse.status == "success") {
-
-                        try {
-                            val urlResponse = getImagePreSignedUrl(
-                                urls = saveImageResponse.resourcePaths,
-                                token = _token
-                            )
-
-                            _imageList.value = _imageList.value.mapValues { (key, imageList) ->
+                    if (resourcePath != null) {
+                        _imageList.value = _imageList.value.mapValues { (key, imageList) ->
+                            if (key == event.elementId) {
                                 imageList.map { imageModel ->
-                                    if (imageModel.byteImage != null) {
-                                        imageModel.copy(
-                                            byteImage = null,
-                                            isLoading = false,
-                                            resourcePath = urlResponse,
-                                            resourceId = saveImageResponse.resourceId
-                                        )
-                                    } else {
-                                        imageModel
-                                    }
+                                    imageModel.copy(
+                                        isLoading = false,
+                                        resourcePath = resourcePath
+                                    )
                                 }
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-
-                            _imageList.value = _imageList.value.mapValues { (key, imageList) ->
-                                imageList.map { imageModel ->
-                                    if (imageModel.byteImage != null) {
-                                        imageModel.copy(
-                                            byteImage = null,
-                                            isLoading = false,
-                                            resourcePath = saveImageResponse.resourcePaths,
-                                            resourceId = saveImageResponse.resourceId
-                                        )
-                                    } else {
-                                        imageModel
-                                    }
-                                }
-                            }
+                            } else imageList
                         }
+
+                        _localParameterValueMap.value =
+                            _localParameterValueMap.value.toMutableMap().apply {
+                                this[event.elementId] = InputWrapper(
+                                    value = _imageList.value[event.elementId]?.joinToString(",")
+                                        ?: "",
+                                    errorMessage = ""
+                                )
+                            }
                     }
                 }
             }
@@ -456,11 +434,42 @@ class FormScreenViewModel : ViewModel() {
                 }
                 _imageList.value = updatedImageList
 
+                _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
+                    this[event.elementId] = InputWrapper(
+                        value = updatedImageList[event.elementId]?.joinToString(",") ?: "",
+                        errorMessage = ""
+                    )
+                }
             }
 
             is FormScreenEvent.OnSearchValueChanged -> {
                 elementId = event.elementId
                 _searchText.value = event.searchText
+            }
+
+            is FormScreenEvent.OnImageViewButtonClicked -> {
+                viewModelScope.launch {
+                    try {
+                        val url =
+                            getImagePreSignedUrl(urls = event.image.resourcePath, token = _token)
+
+                        _imageList.value = _imageList.value.mapValues { (key, imageList) ->
+                            if (key == event.elementId) {
+                                imageList.map { imageModel ->
+                                    if (imageModel.resourcePath == event.image.resourcePath) {
+                                        imageModel.copy(
+                                            isLoading = false,
+                                            preSignedUrl = url
+                                        )
+                                    } else
+                                        imageModel
+                                }
+                            } else imageList
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
             }
         }
     }
@@ -568,16 +577,18 @@ class FormScreenViewModel : ViewModel() {
             _searchText.value = "-"
             delay(1000)
             _searchText.value = ""
-            httpClient.close()
         } catch (e: Exception) {
             throw Exception("Failed to parse the response. Please try again later.", e)
+        } finally {
+            httpClient.close()
         }
     }
 
     private suspend fun saveImageApi(
         image: ImageModel,
         token: String
-    ): SaveImageResponseDto {
+    ): String? {
+
         val httpClient = provideHttpClient(token = token)
         val saveImageResponseDto: SaveImageResponseDto?
 
@@ -602,9 +613,6 @@ class FormScreenViewModel : ViewModel() {
                         boundary = "WebAppBoundary"
                     )
                 )
-                onUpload { bytesSentTotal, contentLength ->
-                    println("Sent $bytesSentTotal bytes from $contentLength")
-                }
             }
         } catch (e: IOException) {
             e.printStackTrace()
@@ -623,11 +631,12 @@ class FormScreenViewModel : ViewModel() {
 
         try {
             saveImageResponseDto = result.body<SaveImageResponseDto>()
-            httpClient.close()
         } catch (e: Exception) {
             throw Exception("Failed to parse the response. Please try again later.", e)
+        } finally {
+            httpClient.close()
         }
-        return saveImageResponseDto
+        return saveImageResponseDto?.resourcePaths
     }
 
     private suspend fun getImagePreSignedUrl(urls: String, token: String): String {
@@ -635,7 +644,7 @@ class FormScreenViewModel : ViewModel() {
         val imageUrl: String
 
         val result = try {
-            httpClient.post("https://enable.prathamapps.com/api/child_profile/presignedurl/") {
+            httpClient.post("https://enable.prathamapps.com/api/resource/presignedurl/") {
                 setBody(
                     FormDataContent(
                         parameters {
@@ -653,7 +662,7 @@ class FormScreenViewModel : ViewModel() {
             in 200..299 -> Unit
             500 -> throw Exception("Internal server error. Please try again later.")
             in 400..499 -> {
-                throw Exception("Client error: ${result.body<ImagePreSignedUrlResponseDto>().detail}")
+                throw Exception("Client error: ${result.body<ImagePreSignedUrlResponseDto>().message}")
             }
 
             else -> throw Exception("An unknown error occurred. Please try again.")
@@ -661,10 +670,11 @@ class FormScreenViewModel : ViewModel() {
 
         try {
             imageUrl = result.body<ImagePreSignedUrlResponseDto>().urls?.joinToString(",") ?: ""
-            httpClient.close()
         } catch (e: Exception) {
             e.printStackTrace()
             throw Exception("Failed to parse the response. Please try again later.")
+        } finally {
+            httpClient.close()
         }
         return imageUrl
     }

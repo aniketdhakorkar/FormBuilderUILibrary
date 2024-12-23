@@ -11,8 +11,6 @@ data class SaveImageResponseDto(
     val activity: String,
     @SerialName("form")
     val form: String,
-    @SerialName("resource_id")
-    val resourceId: Int,
     @SerialName("resource_paths")
     val resourcePaths: String,
     @SerialName("status")

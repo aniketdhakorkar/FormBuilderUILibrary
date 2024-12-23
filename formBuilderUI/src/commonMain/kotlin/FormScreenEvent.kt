@@ -20,4 +20,7 @@ sealed class FormScreenEvent {
     data class OnPhotoDeleteButtonClicked(val elementId: Int, val index: Int) : FormScreenEvent()
 
     data class OnSearchValueChanged(val elementId: Int, val searchText: String) : FormScreenEvent()
+
+    data class OnImageViewButtonClicked(val elementId: Int, val image: ImageModel) :
+        FormScreenEvent()
 }

@@ -3,6 +3,7 @@ package ui.component
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.TransformableState
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -36,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -66,9 +67,9 @@ fun CreateCamera(
     imageList: List<ImageModel>,
     action: String,
     onPhotoTaken: (ImageModel) -> Unit,
-    onPhotoDeleteButtonClicked: (Int) -> Unit
+    onPhotoDeleteButtonClicked: (Int) -> Unit,
+    onImageViewButtonClicked: (ImageModel) -> Unit
 ) {
-
     val permissions = providePermissions()
     val cameraPermissionState = remember { mutableStateOf(permissions.hasCameraPermission()) }
     val cameraController = remember { mutableStateOf<CameraController?>(null) }
@@ -91,15 +92,14 @@ fun CreateCamera(
         )
 
         LazyRow(verticalAlignment = Alignment.CenterVertically) {
-            itemsIndexed(imageList.toList()) { index, image ->
+            itemsIndexed(imageList) { index, image ->
                 DisplayImageItem(
                     image = image,
                     index = index,
                     action = action,
                     onPhotoDeleteButtonClicked = onPhotoDeleteButtonClicked,
-                    onPhotoClicked = {
-                        isViewCamera.value = true
-                    }
+                    onPhotoClicked = { isViewCamera.value = true },
+                    onImageViewButtonClicked = onImageViewButtonClicked
                 )
 
                 if (isViewCamera.value) {
@@ -109,6 +109,7 @@ fun CreateCamera(
                     )
                 }
             }
+
             item {
                 AddPhotoButton { isOpenCamera.value = true }
             }
@@ -124,52 +125,80 @@ fun CreateCamera(
     }
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun DisplayImageItem(
     image: ImageModel,
     index: Int,
     action: String,
     onPhotoDeleteButtonClicked: (Int) -> Unit,
-    onPhotoClicked: () -> Unit
+    onPhotoClicked: () -> Unit,
+    onImageViewButtonClicked: (ImageModel) -> Unit
 ) {
-
     Box(
         modifier = Modifier
             .width(220.dp)
             .height(280.dp)
             .padding(end = 8.dp)
             .clip(RoundedCornerShape(8.dp))
-            .clickable {
-                onPhotoClicked()
-            }
+            .clickable { onPhotoClicked() }
             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)),
         contentAlignment = Alignment.Center
     ) {
-        if (image.byteImage != null) {
-            Image(
-                contentScale = ContentScale.FillBounds,
-                bitmap = image.byteImage.decodeToImageBitmap(),
-                contentDescription = null
-            )
-        } else {
-            AsyncImage(model = image.resourcePath, contentDescription = null)
+        ImageContent(image = image)
+
+        when (action) {
+            "view", "edit" -> {
+                Button(
+                    onClick = {
+                        onImageViewButtonClicked(image)
+                        onPhotoClicked()
+                    },
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(imageVector = Icons.Default.RemoveRedEye, contentDescription = "View")
+                        Text(text = "View")
+                    }
+                }
+            }
         }
 
-        if (image.isLoading)
-            CircularProgressIndicator()
-
-        if (action != "view")
+        if (action != "view") {
             IconButton(
-                modifier = Modifier.align(Alignment.TopEnd),
-                onClick = { onPhotoDeleteButtonClicked(index) }
+                onClick = { onPhotoDeleteButtonClicked(index) },
+                modifier = Modifier.align(Alignment.TopEnd)
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = null,
+                    contentDescription = "Delete",
                     tint = MaterialTheme.colorScheme.error
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun ImageContent(image: ImageModel) {
+    if (image.byteImage != null) {
+        Image(
+            bitmap = image.byteImage.decodeToImageBitmap(),
+            contentDescription = null,
+            contentScale = ContentScale.FillBounds,
+            modifier = Modifier.fillMaxSize()
+        )
+    } else {
+        AsyncImage(
+            model = image.preSignedUrl,
+            contentDescription = null,
+            contentScale = ContentScale.FillBounds,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+
+    if (image.isLoading) {
+        CircularProgressIndicator()
     }
 }
 
@@ -184,12 +213,13 @@ fun AddPhotoButton(onClick: () -> Unit) {
         )
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
+            Icon(
                 modifier = Modifier.size(80.dp),
                 imageVector = Icons.Filled.CameraAlt,
                 contentDescription = null,
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.outlineVariant)
+                tint = MaterialTheme.colorScheme.outlineVariant
             )
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Outlined.Add,
@@ -197,6 +227,7 @@ fun AddPhotoButton(onClick: () -> Unit) {
                     modifier = Modifier.padding(end = 4.dp),
                     tint = MaterialTheme.colorScheme.outline
                 )
+
                 Text(
                     text = "Add Photo",
                     fontSize = 14.sp,
@@ -228,6 +259,7 @@ fun CameraDialog(
                     cameraController.value = it
                 }
             )
+
             cameraController.value?.let { controller ->
                 CameraScreen(
                     cameraController = controller,
@@ -262,21 +294,47 @@ fun ImagePreviewDialog(imageModel: ImageModel, onDismiss: () -> Unit) {
                     )
                 }
 
-                AsyncImage(
-                    modifier = Modifier
-                        .graphicsLayer {
-                            scaleX = scale
-                            scaleY = scale
-                            translationX = offset.x
-                            translationY = offset.y
-                        }
-                        .transformable(state),
-                    model = imageModel.resourcePath,
-                    contentDescription = null
-                )
+                ImageContentWithTransform(imageModel, state, scale, offset)
             }
         }
     )
+}
+
+@OptIn(ExperimentalResourceApi::class)
+@Composable
+fun ImageContentWithTransform(
+    imageModel: ImageModel,
+    state: TransformableState,
+    scale: Float,
+    offset: Offset
+) {
+    if (imageModel.byteImage != null) {
+        Image(
+            bitmap = imageModel.byteImage.decodeToImageBitmap(),
+            contentDescription = null,
+            modifier = Modifier
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = offset.x
+                    translationY = offset.y
+                }
+                .transformable(state)
+        )
+    } else {
+        AsyncImage(
+            modifier = Modifier
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = offset.x
+                    translationY = offset.y
+                }
+                .transformable(state),
+            model = imageModel.preSignedUrl,
+            contentDescription = null
+        )
+    }
 }
 
 @Composable
@@ -288,9 +346,60 @@ fun CameraScreen(
     val scope = rememberCoroutineScope()
     var isFlashOn by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    /*Box(modifier = Modifier.fillMaxSize()) {
+        IconButton(
+            onClick = onCloseButtonClicked,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Close,
+                contentDescription = "Close",
+                tint = MaterialTheme.colorScheme.surface
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            IconButton(onClick = {
+                isFlashOn = !isFlashOn
+                cameraController.toggleFlashMode()
+            }) {
+                Icon(
+                    imageVector = if (isFlashOn) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
+                    contentDescription = "Toggle Flash",
+                    tint = if (isFlashOn) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                )
+            }
+
+            IconButton(onClick = {
+                scope.launch {
+                    val result = cameraController.takePicture()
+                    if (result is ImageCaptureResult.Success) {
+                        onCameraButtonClicked(ImageModel(byteImage = result.byteArray))
+                        onCloseButtonClicked()
+                    } else if (result is ImageCaptureResult.Error) {
+                        println("Image Capture Error: ${result.exception.message}")
+                    }
+                }
+            }) {
+                Icon(
+                    imageVector = Icons.Filled.Camera,
+                    contentDescription = "Capture",
+                    tint = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.size(72.dp)
+                )
+            }
+        }
+    }*/
+
+    Box(modifier = Modifier.fillMaxSize()) {
 
         IconButton(onClick = onCloseButtonClicked) {
             Icon(
@@ -312,9 +421,7 @@ fun CameraScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(contentAlignment = Alignment.Center) {
                     IconButton(
                         onClick = {
                             scope.launch {
@@ -361,5 +468,3 @@ fun CameraScreen(
         }
     }
 }
-
-
