@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import ui.helper.DropdownIcon
 import ui.helper.DropdownMenuComponent
@@ -120,8 +121,8 @@ fun CreateDropdown(
                     .alpha(0f)
                     .clickable {
                         if (isEnabled) {
+                            focusManager.clearFocus()
                             focusRequester.requestFocus()
-                            expanded = true
                         }
                     }
             )

@@ -153,7 +153,7 @@ fun DisplayImageItem(
                         onImageViewButtonClicked(image)
                         onPhotoClicked()
                     },
-                    modifier = Modifier.align(Alignment.BottomCenter)
+                    modifier = Modifier.align(Alignment.Center)
                 ) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Icon(imageVector = Icons.Default.RemoveRedEye, contentDescription = "View")
@@ -345,59 +345,6 @@ fun CameraScreen(
 ) {
     val scope = rememberCoroutineScope()
     var isFlashOn by remember { mutableStateOf(false) }
-
-    /*Box(modifier = Modifier.fillMaxSize()) {
-        IconButton(
-            onClick = onCloseButtonClicked,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Close,
-                contentDescription = "Close",
-                tint = MaterialTheme.colorScheme.surface
-            )
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceAround
-        ) {
-            IconButton(onClick = {
-                isFlashOn = !isFlashOn
-                cameraController.toggleFlashMode()
-            }) {
-                Icon(
-                    imageVector = if (isFlashOn) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
-                    contentDescription = "Toggle Flash",
-                    tint = if (isFlashOn) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-                )
-            }
-
-            IconButton(onClick = {
-                scope.launch {
-                    val result = cameraController.takePicture()
-                    if (result is ImageCaptureResult.Success) {
-                        onCameraButtonClicked(ImageModel(byteImage = result.byteArray))
-                        onCloseButtonClicked()
-                    } else if (result is ImageCaptureResult.Error) {
-                        println("Image Capture Error: ${result.exception.message}")
-                    }
-                }
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.Camera,
-                    contentDescription = "Capture",
-                    tint = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.size(72.dp)
-                )
-            }
-        }
-    }*/
 
     Box(modifier = Modifier.fillMaxSize()) {
 

@@ -11,6 +11,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.providers.BearerTokens
+import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
@@ -41,35 +44,37 @@ class MainActivity : ComponentActivity() {
         val _visibilityMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
         val _enabledMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
 
-        val httpClient = HttpClient {
-            install(HttpTimeout) {
-                socketTimeoutMillis = 60_000
-                requestTimeoutMillis = 60_000
-            }
-            install(Logging) {
-                logger = Logger.DEFAULT
-                level = LogLevel.ALL
-                logger = object : Logger {
-                    override fun log(message: String) {
-                        co.touchlab.kermit.Logger.d("KtorClient") {
-                            message
-                        }
-                    }
-                }
-            }
-            install(ContentNegotiation) {
-                json(Json {
-                    prettyPrint = true
-                    isLenient = true
-                    ignoreUnknownKeys = true
-                })
-            }
-        }
+        val httpClient = provideHttpClient(token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM1MDQ1MzUyLCJpYXQiOjE3MzUwNDE3NTIsImp0aSI6ImFiN2Y1ZWI1ZGVkNjQ4NWNiMDYwODhiYjgxN2Y4OTQyIiwidXNlcl9pZCI6NjZ9.ku5olYMPhtdwUzSewsTniaVTJTPA-8U9EyydIjoOv8s")
 
         val paramFlow = flow<List<Parameters>> {
             try {
+                val httpClientWithoutAuth = HttpClient {
+                    install(HttpTimeout) {
+                        socketTimeoutMillis = 60_000
+                        requestTimeoutMillis = 60_000
+                    }
+                    install(Logging) {
+                        logger = Logger.DEFAULT
+                        level = LogLevel.ALL
+                        logger = object : Logger {
+                            override fun log(message: String) {
+                                co.touchlab.kermit.Logger.d("KtorClient") {
+                                    message
+                                }
+                            }
+                        }
+                    }
+                    install(ContentNegotiation) {
+                        json(Json {
+                            prettyPrint = true
+                            isLenient = true
+                            ignoreUnknownKeys = true
+                        })
+                    }
+                }
+
                 val result =
-                    httpClient.post("https://testdataentry.prathamapps.com/parameters/get/") {
+                    httpClientWithoutAuth.post("https://testdataentry.prathamapps.com/parameters/get/") {
                         setBody(
                             FormDataContent(
                                 parameters {
@@ -133,8 +138,41 @@ class MainActivity : ComponentActivity() {
                 parameterValueMap = parameterValueMap,
                 parameterMap = parameterMap,
                 visibilityMap = visibilityMap,
-                enabledStatusMap = enabledMap
+                enabledStatusMap = enabledMap,
+                httpClient = httpClient
             )*/
         }
     }
+
+    /*private fun provideHttpClient(token: String): HttpClient = HttpClient {
+        install(HttpTimeout) {
+            socketTimeoutMillis = 60_000
+            requestTimeoutMillis = 60_000
+        }
+        install(Logging) {
+            logger = Logger.DEFAULT
+            level = LogLevel.ALL
+            logger = object : Logger {
+                override fun log(message: String) {
+                    co.touchlab.kermit.Logger.d("KtorClient") {
+                        message
+                    }
+                }
+            }
+        }
+        install(ContentNegotiation) {
+            json(Json {
+                prettyPrint = true
+                isLenient = true
+                ignoreUnknownKeys = true
+            })
+        }
+        install(Auth) {
+            bearer {
+                loadTokens {
+                    BearerTokens(accessToken = token, refreshToken = null)
+                }
+            }
+        }
+    }*/
 }

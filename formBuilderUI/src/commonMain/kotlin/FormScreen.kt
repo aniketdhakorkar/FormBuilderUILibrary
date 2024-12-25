@@ -30,6 +30,7 @@ import coil3.memory.MemoryCache
 import coil3.request.CachePolicy
 import coil3.request.crossfade
 import coil3.util.DebugLogger
+import io.ktor.client.HttpClient
 import ui.component.CreateDropdown
 import ui.component.CreateLabel
 import ui.component.CreateTextField
@@ -53,7 +54,7 @@ fun FormScreen(
     activity: String,
     form: String,
     action: String,
-    token: String
+    httpClient: HttpClient
 ) {
 
     setSingletonImageLoaderFactory { context ->
@@ -82,8 +83,8 @@ fun FormScreen(
                 enabledStatusMap = enabledStatusMap,
                 activity = activity,
                 form = form,
-                token = token,
-                action = action
+                action = action,
+                httpClient = httpClient
             )
     }
 

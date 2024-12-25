@@ -64,7 +64,6 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.client.encoding)
-            implementation(libs.ktor.client.auth)
 
             //date time
             implementation(libs.kotlinx.datetime)
@@ -124,7 +123,7 @@ mavenPublishing {
     coordinates(
         groupId = "io.github.aniketdhakorkar",
         artifactId = "form-builder-ui",
-        version = "1.0.0-beta-40"
+        version = "1.0.0-beta-49"
     )
 
     // Configure POM metadata for the published artifact

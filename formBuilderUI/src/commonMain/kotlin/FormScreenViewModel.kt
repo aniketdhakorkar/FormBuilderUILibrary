@@ -2,26 +2,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.auth.Auth
-import io.ktor.client.plugins.auth.providers.BearerTokens
-import io.ktor.client.plugins.auth.providers.bearer
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.logging.DEFAULT
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.plugins.onUpload
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.parameters
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -56,7 +46,7 @@ import validation.validateInputInRange
 
 @OptIn(FlowPreview::class)
 class FormScreenViewModel : ViewModel() {
-
+    private lateinit var httpClient: HttpClient
     private val _searchText = MutableStateFlow("")
     val searchText = _searchText.asStateFlow()
     private var elementId: Int = 0
@@ -101,7 +91,6 @@ class FormScreenViewModel : ViewModel() {
     private val _dependentValueMap =
         MutableStateFlow<Map<Int, DependentValueCustomText>>(emptyMap())
     val dependentValueMap = _dependentValueMap.asStateFlow()
-    private var _token: String = ""
     private val _showProgressIndicator = MutableStateFlow(false)
     val showProgressIndicator = _showProgressIndicator.asStateFlow()
     private val _imageList = MutableStateFlow<Map<Int, List<ImageModel>>>(emptyMap())
@@ -166,8 +155,7 @@ class FormScreenViewModel : ViewModel() {
                                 remoteApi(
                                     url = it.url,
                                     filterMap = filterMap,
-                                    elementId = it.dependent,
-                                    token = _token
+                                    elementId = it.dependent
                                 )
                             }
 
@@ -383,13 +371,15 @@ class FormScreenViewModel : ViewModel() {
                     val resourcePath: String?
 
                     try {
-                        resourcePath = saveImageApi(image = event.image, token = _token)
+                        resourcePath = saveImageApi(image = event.image)
                     } catch (e: Exception) {
                         e.printStackTrace()
+                        val updatedImages = currentImages.toMutableList().apply {
+                            removeLast()
+                        }
+
                         _imageList.value = _imageList.value.toMutableMap().apply {
-                            this[event.elementId] = currentImages.apply {
-                                if (isNotEmpty()) removeLast()
-                            }
+                            this[event.elementId] = updatedImages
                         }
 
                         SendUiEvent.send(
@@ -400,27 +390,25 @@ class FormScreenViewModel : ViewModel() {
                         return@launch
                     }
 
-                    if (resourcePath != null) {
-                        _imageList.value = _imageList.value.mapValues { (key, imageList) ->
-                            if (key == event.elementId) {
-                                imageList.map { imageModel ->
-                                    imageModel.copy(
-                                        isLoading = false,
-                                        resourcePath = resourcePath
-                                    )
-                                }
-                            } else imageList
-                        }
-
-                        _localParameterValueMap.value =
-                            _localParameterValueMap.value.toMutableMap().apply {
-                                this[event.elementId] = InputWrapper(
-                                    value = _imageList.value[event.elementId]?.joinToString(",")
-                                        ?: "",
-                                    errorMessage = ""
+                    _imageList.value = _imageList.value.mapValues { (key, imageList) ->
+                        if (key == event.elementId) {
+                            imageList.map { imageModel ->
+                                imageModel.copy(
+                                    isLoading = false,
+                                    resourcePath = resourcePath
                                 )
                             }
+                        } else imageList
                     }
+
+                    _localParameterValueMap.value =
+                        _localParameterValueMap.value.toMutableMap().apply {
+                            this[event.elementId] = InputWrapper(
+                                value = _imageList.value[event.elementId]?.joinToString(",")
+                                    ?: "",
+                                errorMessage = ""
+                            )
+                        }
                 }
             }
 
@@ -450,8 +438,7 @@ class FormScreenViewModel : ViewModel() {
             is FormScreenEvent.OnImageViewButtonClicked -> {
                 viewModelScope.launch {
                     try {
-                        val url =
-                            getImagePreSignedUrl(urls = event.image.resourcePath, token = _token)
+                        val url = getImagePreSignedUrl(urls = event.image.resourcePath)
 
                         _imageList.value = _imageList.value.mapValues { (key, imageList) ->
                             if (key == event.elementId) {
@@ -481,17 +468,17 @@ class FormScreenViewModel : ViewModel() {
         enabledStatusMap: Map<Int, Boolean>,
         activity: String,
         form: String,
-        token: String,
-        action: String
+        action: String,
+        httpClient: HttpClient
     ) {
         _localParameterValueMap.value = parameterValueMap
         _localParameterMap.value = parameterMap
         _localVisibilityStatusMap.value = visibilityMap
         _localEnabledStatusMap.value = enabledStatusMap
-        _token = token
         _action = action
         _activity = activity
         _form = form
+        this.httpClient = httpClient
         val tempDependentValueMap = _dependentValueMap.value.toMutableMap()
         val tempDependentOperatorMap = _dependentOperatorMap.value.toMutableMap()
 
@@ -519,8 +506,7 @@ class FormScreenViewModel : ViewModel() {
                         remoteApi(
                             url = element.elementData.dataUrl,
                             elementId = element.elementId,
-                            filterMap = emptyMap(),
-                            token = token
+                            filterMap = emptyMap()
                         )
                     } catch (e: Exception) {
                         e.printStackTrace()
@@ -541,11 +527,8 @@ class FormScreenViewModel : ViewModel() {
     private suspend fun remoteApi(
         url: String,
         filterMap: Map<String, String>,
-        elementId: Int,
-        token: String
+        elementId: Int
     ) {
-        val httpClient = provideHttpClient(token = token)
-
         val result = try {
             httpClient.get(url) {
                 url {
@@ -579,17 +562,10 @@ class FormScreenViewModel : ViewModel() {
             _searchText.value = ""
         } catch (e: Exception) {
             throw Exception("Failed to parse the response. Please try again later.", e)
-        } finally {
-            httpClient.close()
         }
     }
 
-    private suspend fun saveImageApi(
-        image: ImageModel,
-        token: String
-    ): String? {
-
-        val httpClient = provideHttpClient(token = token)
+    private suspend fun saveImageApi(image: ImageModel): String {
         val saveImageResponseDto: SaveImageResponseDto?
 
         val result = try {
@@ -601,16 +577,18 @@ class FormScreenViewModel : ViewModel() {
                             append("form", _form)
                             append(
                                 key = "resource",
-                                value = image.byteImage ?: byteArrayOf(),
+                                value = image.byteImage
+                                    ?: throw IllegalArgumentException("Image data cannot be null or empty"),
                                 headers = Headers.build {
-                                    append(HttpHeaders.ContentType, "image/png")
+                                    append(
+                                        HttpHeaders.ContentType, ContentType.Image.PNG.toString()
+                                    )
                                     append(
                                         HttpHeaders.ContentDisposition,
                                         "filename=\"image.png\""
                                     )
                                 })
-                        },
-                        boundary = "WebAppBoundary"
+                        }
                     )
                 )
             }
@@ -633,14 +611,11 @@ class FormScreenViewModel : ViewModel() {
             saveImageResponseDto = result.body<SaveImageResponseDto>()
         } catch (e: Exception) {
             throw Exception("Failed to parse the response. Please try again later.", e)
-        } finally {
-            httpClient.close()
         }
-        return saveImageResponseDto?.resourcePaths
+        return saveImageResponseDto.resourcePaths
     }
 
-    private suspend fun getImagePreSignedUrl(urls: String, token: String): String {
-        val httpClient = provideHttpClient(token = token)
+    private suspend fun getImagePreSignedUrl(urls: String): String {
         val imageUrl: String
 
         val result = try {
@@ -673,41 +648,7 @@ class FormScreenViewModel : ViewModel() {
         } catch (e: Exception) {
             e.printStackTrace()
             throw Exception("Failed to parse the response. Please try again later.")
-        } finally {
-            httpClient.close()
         }
         return imageUrl
-    }
-
-    private fun provideHttpClient(token: String): HttpClient = HttpClient {
-        install(HttpTimeout) {
-            socketTimeoutMillis = 60_000
-            requestTimeoutMillis = 60_000
-        }
-        install(Logging) {
-            logger = Logger.DEFAULT
-            level = LogLevel.ALL
-            logger = object : Logger {
-                override fun log(message: String) {
-                    co.touchlab.kermit.Logger.d("KtorClient") {
-                        message
-                    }
-                }
-            }
-        }
-        install(ContentNegotiation) {
-            json(Json {
-                prettyPrint = true
-                isLenient = true
-                ignoreUnknownKeys = true
-            })
-        }
-        install(Auth) {
-            bearer {
-                loadTokens {
-                    BearerTokens(accessToken = token, refreshToken = null)
-                }
-            }
-        }
     }
 }

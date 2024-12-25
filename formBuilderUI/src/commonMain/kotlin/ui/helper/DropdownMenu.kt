@@ -19,7 +19,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -45,7 +44,7 @@ fun DropdownMenuComponent(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
         modifier = Modifier.width(with(LocalDensity.current) { textFieldSize.width.toDp() }),
-        properties = PopupProperties(focusable = true)
+        properties = PopupProperties(focusable = isSearch)
     ) {
         if (isSearch)
             OutlinedTextField(
