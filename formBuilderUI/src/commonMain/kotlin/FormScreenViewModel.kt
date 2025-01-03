@@ -140,11 +140,21 @@ class FormScreenViewModel : ViewModel() {
                                     }
                                 }
 
-                                remoteApi(
-                                    url = api.url,
-                                    filterMap = filterMap,
-                                    elementId = api.dependent
-                                )
+                                try {
+                                    remoteApi(
+                                        url = api.url,
+                                        filterMap = filterMap,
+                                        elementId = api.dependent
+                                    )
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                    SendUiEvent.send(
+                                        viewModelScope = viewModelScope,
+                                        _uiEvent = _uiEvent,
+                                        event = e.message
+                                            ?: "An unknown error occurred. Please try again."
+                                    )
+                                }
 
                                 _localParameterValueMap.value =
                                     _localParameterValueMap.value.toMutableMap().apply {

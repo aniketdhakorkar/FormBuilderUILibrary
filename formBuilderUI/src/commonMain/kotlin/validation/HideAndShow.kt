@@ -6,7 +6,9 @@ fun hideAndShowValidation(
 ): Map<Int, Boolean> {
     return elementOptionDependent?.flatMap { (key, value) ->
         value.split(",").map { id ->
-            id.toInt() to (selectedOptionIds.contains(key.toInt()))
+            id.toInt() to selectedOptionIds.contains(key.toInt())
         }
-    }?.toMap() ?: emptyMap()
+    }?.groupBy({ it.first }, { it.second })
+        ?.mapValues { (_, values) -> values.any { it } }
+        ?: emptyMap()
 }

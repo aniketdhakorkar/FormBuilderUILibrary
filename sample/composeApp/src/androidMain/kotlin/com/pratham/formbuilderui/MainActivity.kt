@@ -80,8 +80,8 @@ class MainActivity : ComponentActivity() {
                                 parameters {
                                     append("app_type", "1")
                                     append("project_id", "6")
-                                    append("program_id", "14")
-                                    append("category_id", "11")
+                                    append("program_id", "18")
+                                    append("category_id", "15")
                                 }
                             )
                         )
@@ -140,7 +140,7 @@ class MainActivity : ComponentActivity() {
                 visibilityMap = visibilityMap,
                 enabledStatusMap = enabledMap,
                 httpClient = httpClient
-            ) */
+            )*/
         }
     }
 
@@ -171,7 +171,7 @@ class MainActivity : ComponentActivity() {
             bearer {
                 loadTokens {
                     BearerTokens(
-                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM1NTc3OTI3LCJpYXQiOjE3MzU1NzQzMjcsImp0aSI6ImE3NjJkMzQ3NmQ3NTQzNTVhNmMxMWUwMmIwZDcwNmI4IiwidXNlcl9pZCI6Mn0.R1UGZisgHgAkLRoxE9QenhelZ9P8_orEAqCCO_fjIuw",
+                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM1OTA5ODYyLCJpYXQiOjE3MzU5MDYyNjIsImp0aSI6IjAwOWQyNWRhZGU5MTRkMTBiNjI4M2VhMzkzNzMwMGJlIiwidXNlcl9pZCI6MTAyfQ.1i_e8j7N4RpdYRVQPA-efxeioIVYT-8jzik8Npgz_cQ",
                         refreshToken = null
                     )
                 }
