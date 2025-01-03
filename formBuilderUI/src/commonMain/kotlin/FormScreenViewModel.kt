@@ -105,64 +105,55 @@ class FormScreenViewModel : ViewModel() {
         when (event) {
             is FormScreenEvent.OnDropdownValueChanged -> {
 
-                if (_localParameterMap.value[event.elementId]?.elementOptionDependent != null) {
+                _localParameterMap.value[event.elementId]?.elementOptionDependent?.let { elementOptionDependent ->
                     val visibilityMap = hideAndShowValidation(
-                        elementOptionDependent = _localParameterMap.value[event.elementId]?.elementOptionDependent,
-                        optionId = event.option.optionId,
+                        elementOptionDependent = elementOptionDependent,
+                        selectedOptionIds = listOf(event.option.optionId)
                     )
+
                     _localVisibilityStatusMap.value =
                         _localVisibilityStatusMap.value.toMutableMap().apply {
-                            visibilityMap.forEach { (key, value) ->
-                                put(key, value)
-                            }
+                            putAll(visibilityMap)
                         }
                 }
 
                 _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
-                    put(
-                        event.elementId,
-                        InputWrapper(
-                            value = if (_action == "filter")
-                                Json.encodeToString<DropdownOption>(event.option)
-                            else event.option.pValue.toString(),
-                            errorMessage = ""
-                        )
-                    )
+                    val value = if (_action == "filter") {
+                        Json.encodeToString<DropdownOption>(event.option)
+                    } else {
+                        event.option.pValue.toString()
+                    }
+                    put(event.elementId, InputWrapper(value = value, errorMessage = ""))
                 }
 
-                //for filter in home module
-                val elementData = _localParameterMap.value[event.elementId]?.elementData
-                if (elementData?.dataUrl != null) {
-                    if (elementData.dependentApi != null) {
-                        elementData.dependentApi.forEach {
+                _localParameterMap.value[event.elementId]?.elementData?.let { elementData ->
+                    elementData.dataUrl?.let {
+                        elementData.dependentApi?.forEach { api ->
                             viewModelScope.launch {
-                                var filterMap: Map<String, String> = emptyMap()
-                                it.parameter.forEach { (key, value) ->
-                                    filterMap = filterMap.toMutableMap().apply {
-                                        val pValue = if (_action == "filter")
-                                            Json.decodeFromString<DropdownOption>(
-                                                _localParameterValueMap.value[value]?.value ?: ""
-                                            ).pValue.toString()
-                                        else
-                                            _localParameterValueMap.value[value]?.value ?: "0"
+                                val filterMap = api.parameter.mapValues { (_, value) ->
+                                    val paramValue =
+                                        _localParameterValueMap.value[value]?.value.orEmpty()
+                                    if (_action == "filter") {
+                                        Json.decodeFromString<DropdownOption>(paramValue).pValue.toString()
+                                    } else {
+                                        paramValue.ifEmpty { "0" }
+                                    }
+                                }
+
+                                remoteApi(
+                                    url = api.url,
+                                    filterMap = filterMap,
+                                    elementId = api.dependent
+                                )
+
+                                _localParameterValueMap.value =
+                                    _localParameterValueMap.value.toMutableMap().apply {
                                         put(
-                                            key = key,
-                                            value = pValue
+                                            api.dependent,
+                                            InputWrapper(value = "", errorMessage = "")
                                         )
                                     }
-
-                                }
-                                remoteApi(
-                                    url = it.url,
-                                    filterMap = filterMap,
-                                    elementId = it.dependent
-                                )
                             }
-
-                            _localParameterValueMap.value =
-                                _localParameterValueMap.value.toMutableMap().apply {
-                                    put(it.dependent, InputWrapper(value = "", errorMessage = ""))
-                                }
                         }
                     }
                 }
@@ -456,6 +447,48 @@ class FormScreenViewModel : ViewModel() {
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
+                }
+            }
+
+            is FormScreenEvent.OnCheckboxValueChanged -> {
+
+                val tempList = _localParameterValueMap.value[event.elementId]?.value
+                    ?.split(",")
+                    ?.toMutableList()
+                    ?: mutableListOf()
+
+                val optionValue = event.option.pValue.toString()
+
+                if (!tempList.remove(optionValue)) {
+                    tempList.add(optionValue)
+                }
+
+                _localParameterMap.value[event.elementId]?.elementOptionDependent?.let { elementOptionDependent ->
+                    val selectedOptionIds = tempList.mapNotNull { pValue ->
+                        _localParameterMap.value[event.elementId]?.elementData?.options
+                            ?.firstOrNull { it.pValue == pValue.toIntOrNull() }
+                            ?.optionId
+                    }.ifEmpty { listOf(0) }
+
+                    val visibilityMap = hideAndShowValidation(
+                        elementOptionDependent = elementOptionDependent,
+                        selectedOptionIds = selectedOptionIds
+                    )
+
+                    _localVisibilityStatusMap.value =
+                        _localVisibilityStatusMap.value.toMutableMap().apply {
+                            putAll(visibilityMap)
+                        }
+                }
+
+                _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
+                    put(
+                        event.elementId,
+                        InputWrapper(
+                            value = tempList.joinToString(","),
+                            errorMessage = ""
+                        )
+                    )
                 }
             }
         }

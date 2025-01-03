@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
         val _visibilityMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
         val _enabledMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
 
-        val httpClient = provideHttpClient(token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM1MDQ1MzUyLCJpYXQiOjE3MzUwNDE3NTIsImp0aSI6ImFiN2Y1ZWI1ZGVkNjQ4NWNiMDYwODhiYjgxN2Y4OTQyIiwidXNlcl9pZCI6NjZ9.ku5olYMPhtdwUzSewsTniaVTJTPA-8U9EyydIjoOv8s")
+        val httpClient = provideHttpClient()
 
         val paramFlow = flow<List<Parameters>> {
             try {
@@ -80,8 +80,8 @@ class MainActivity : ComponentActivity() {
                                 parameters {
                                     append("app_type", "1")
                                     append("project_id", "6")
-                                    append("program_id", "10")
-                                    append("category_id", "3")
+                                    append("program_id", "14")
+                                    append("category_id", "11")
                                 }
                             )
                         )
@@ -140,11 +140,11 @@ class MainActivity : ComponentActivity() {
                 visibilityMap = visibilityMap,
                 enabledStatusMap = enabledMap,
                 httpClient = httpClient
-            )*/
+            ) */
         }
     }
 
-    /*private fun provideHttpClient(token: String): HttpClient = HttpClient {
+    /*private fun provideHttpClient(): HttpClient = HttpClient {
         install(HttpTimeout) {
             socketTimeoutMillis = 60_000
             requestTimeoutMillis = 60_000
@@ -170,7 +170,10 @@ class MainActivity : ComponentActivity() {
         install(Auth) {
             bearer {
                 loadTokens {
-                    BearerTokens(accessToken = token, refreshToken = null)
+                    BearerTokens(
+                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM1NTc3OTI3LCJpYXQiOjE3MzU1NzQzMjcsImp0aSI6ImE3NjJkMzQ3NmQ3NTQzNTVhNmMxMWUwMmIwZDcwNmI4IiwidXNlcl9pZCI6Mn0.R1UGZisgHgAkLRoxE9QenhelZ9P8_orEAqCCO_fjIuw",
+                        refreshToken = null
+                    )
                 }
             }
         }

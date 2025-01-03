@@ -23,4 +23,7 @@ sealed class FormScreenEvent {
 
     data class OnImageViewButtonClicked(val elementId: Int, val image: ImageModel) :
         FormScreenEvent()
+
+    data class OnCheckboxValueChanged(val elementId: Int, val option: DropdownOption) :
+        FormScreenEvent()
 }

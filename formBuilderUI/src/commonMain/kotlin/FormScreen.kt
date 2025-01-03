@@ -42,6 +42,7 @@ import model.parameters.ChildrenX
 import model.parameters.toDropdown
 import okio.FileSystem
 import ui.component.CreateCamera
+import ui.component.CreateCheckbox
 import util.SnackbarController
 
 @Composable
@@ -131,6 +132,7 @@ fun FormScreen(
                         val isMandatory = parameter.second.isRequired
                         val style = parameter.second.style
                         val isSearch = parameter.second.elementType == "ElementDropDownSearch"
+                        val dbParam = parameter.second.databaseParam
 
                         when (parameter.second.elementType) {
                             "ElementLabel" -> CreateLabel(
@@ -185,7 +187,9 @@ fun FormScreen(
                                     isEnabled = isEnabled,
                                     focusManager = focusManager,
                                     action = action,
-                                    optionList = parameter.second.elementData.options.map { it.toDropdown() },
+                                    optionList = parameter.second.elementData.options.map {
+                                        it.toDropdown().copy(dbParam = dbParam)
+                                    },
                                     dropdownValue = parameterValue,
                                     onValueChanged = { option ->
                                         viewModel.onEvent(
@@ -237,6 +241,30 @@ fun FormScreen(
                                             FormScreenEvent.OnImageViewButtonClicked(
                                                 elementId = elementId,
                                                 image = it
+                                            )
+                                        )
+                                    }
+                                )
+                            }
+
+                            "ElementCheckbox" -> {
+                                CreateCheckbox(
+                                    question = question,
+                                    description = description,
+                                    style = style,
+                                    isMandatory = isMandatory,
+                                    isVisible = isVisible,
+                                    isEnabled = isEnabled,
+                                    focusManager = focusManager,
+                                    optionList = parameter.second.elementData.options.map {
+                                        it.toDropdown().copy(dbParam = dbParam)
+                                    },
+                                    cbValue = parameterValue,
+                                    onCheckChanged = { option ->
+                                        viewModel.onEvent(
+                                            FormScreenEvent.OnCheckboxValueChanged(
+                                                elementId = elementId,
+                                                option = option
                                             )
                                         )
                                     }

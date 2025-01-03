@@ -2,9 +2,11 @@ package validation
 
 fun hideAndShowValidation(
     elementOptionDependent: Map<String, String>?,
-    optionId: Int
+    selectedOptionIds: List<Int>
 ): Map<Int, Boolean> {
     return elementOptionDependent?.flatMap { (key, value) ->
-        value.split(",").map { id -> id.toInt() to (optionId == key.toInt()) }
+        value.split(",").map { id ->
+            id.toInt() to (selectedOptionIds.contains(key.toInt()))
+        }
     }?.toMap() ?: emptyMap()
 }

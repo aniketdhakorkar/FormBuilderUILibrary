@@ -86,10 +86,10 @@ fun DropdownMenuComponent(
             )
 
         optionList.forEach { option ->
-            val isSelected = dropdownValue.toIntOrNull() == option.optionId
+            val isSelected = dropdownValue.toIntOrNull() == option.pValue
             DropdownMenuItem(
                 onClick = {
-                    onClick(option)
+                    onClick(option.copy(isChecked = true))
                 },
                 text = {
                     Text(
