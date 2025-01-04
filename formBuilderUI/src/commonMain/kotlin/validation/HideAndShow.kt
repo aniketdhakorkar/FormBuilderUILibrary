@@ -15,18 +15,25 @@ fun hideAndShowValidation(
             dependentIds.split(",").mapNotNull { id ->
                 val dependentId = id.toIntOrNull()
                 dependentId?.let {
+                    // Update visibility
                     result[it] = result[it] ?: false || currentVisibility
 
-                    processDependencies(it, currentVisibility)
+                    // Apply recursion only if the element is being hidden
+                    if (!currentVisibility) {
+                        processDependencies(it, currentVisibility)
+                    }
                 }
             }
         }
     }
 
+    // Start processing dependencies from the given elementId
     processDependencies(elementId, true)
 
     return result
 }
+
+
 
 
 
