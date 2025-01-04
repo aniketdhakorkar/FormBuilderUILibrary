@@ -1,14 +1,32 @@
 package validation
 
+import model.parameters.ChildrenX
+
 fun hideAndShowValidation(
-    elementOptionDependent: Map<String, String>?,
-    selectedOptionIds: List<Int>
+    elementId: Int,
+    parameterMap: Map<Int, ChildrenX>,
+    selectedOptionIds: List<Int>,
 ): Map<Int, Boolean> {
-    return elementOptionDependent?.flatMap { (key, value) ->
-        value.split(",").map { id ->
-            id.toInt() to selectedOptionIds.contains(key.toInt())
+    val result = mutableMapOf<Int, Boolean>()
+
+    fun processDependencies(currentId: Int, isVisible: Boolean) {
+        parameterMap[currentId]?.elementOptionDependent?.forEach { (key, dependentIds) ->
+            val currentVisibility = key.toInt() in selectedOptionIds
+            dependentIds.split(",").mapNotNull { id ->
+                val dependentId = id.toIntOrNull()
+                dependentId?.let {
+                    result[it] = result[it] ?: false || currentVisibility
+
+                    processDependencies(it, currentVisibility)
+                }
+            }
         }
-    }?.groupBy({ it.first }, { it.second })
-        ?.mapValues { (_, values) -> values.any { it } }
-        ?: emptyMap()
+    }
+
+    processDependencies(elementId, true)
+
+    return result
 }
+
+
+

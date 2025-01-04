@@ -12,7 +12,7 @@ sealed class FormScreenEvent {
     data class OnDropdownValueChanged(val elementId: Int, val option: DropdownOption) :
         FormScreenEvent()
 
-    data class OnSubmitButtonClicked(val onClick: (Map<Int, InputWrapper>) -> Unit) :
+    data class OnSubmitButtonClicked(val onClick: (Map<Int, InputWrapper>, Map<Int, Boolean>) -> Unit) :
         FormScreenEvent()
 
     data class OnPhotoTaken(val elementId: Int, val image: ImageModel) : FormScreenEvent()

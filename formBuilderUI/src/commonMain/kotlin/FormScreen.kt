@@ -50,7 +50,7 @@ fun FormScreen(
     parameterValueMap: Map<Int, InputWrapper>,
     parameterMap: Map<Int, ChildrenX>,
     visibilityMap: Map<Int, Boolean>,
-    onClick: (Map<Int, InputWrapper>) -> Unit,
+    onClick: (Map<Int, InputWrapper>, Map<Int, Boolean>) -> Unit,
     enabledStatusMap: Map<Int, Boolean>,
     activity: String,
     form: String,
@@ -278,7 +278,7 @@ fun FormScreen(
                     SubmitButton(
                         showProgressIndicator = showProgressIndicator,
                         onClick = {
-                            viewModel.onEvent(FormScreenEvent.OnSubmitButtonClicked(onClick = onClick))
+                            viewModel.onEvent(FormScreenEvent.OnSubmitButtonClicked(onClick))
                         }
                     )
             }

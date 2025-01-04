@@ -20,7 +20,7 @@ fun App(
             parameterMap = parameterMap,
             visibilityMap = visibilityMap,
             enabledStatusMap = enabledStatusMap,
-            onClick = {},
+            onClick = { _, _ -> },
             action = "add",
             activity = "10",
             form = "3",
