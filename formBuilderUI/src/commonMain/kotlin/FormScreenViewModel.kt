@@ -602,6 +602,8 @@ class FormScreenViewModel : ViewModel() {
         val result = try {
             httpClient.get(url) {
                 url {
+                    parameters.append("activity", _activity)
+                    parameters.append("form", _form)
                     filterMap.forEach { (key, value) ->
                         parameters.append(key, value)
                     }
