@@ -553,6 +553,30 @@ class FormScreenViewModel : ViewModel() {
         val tempDependentOperatorMap = _dependentOperatorMap.value.toMutableMap()
 
         _localParameterMap.value.forEach { (_, element) ->
+            if (element.elementType == "ElementDropDown" && element.isAutofill != null) {
+                val tempPValue =
+                    (_localParameterValueMap.value[element.elementId]?.value ?: "0").toInt()
+                val tempVisibilityMap = hideAndShowValidation(
+                    elementId = element.elementId,
+                    parameterMap = _localParameterMap.value,
+                    selectedOptionIds = listOf((element.elementData.options
+                        .firstOrNull { it.pValue == tempPValue }
+                        ?.optionId) ?: 0)
+                )
+
+                tempVisibilityMap.filterValues { !it }.forEach { (key, _) ->
+                    _localParameterValueMap.value =
+                        _localParameterValueMap.value.toMutableMap().apply {
+                            this[key] = InputWrapper(value = "", errorMessage = "")
+                        }
+                }
+
+                _localVisibilityStatusMap.value =
+                    _localVisibilityStatusMap.value.toMutableMap().apply {
+                        putAll(tempVisibilityMap)
+                    }
+            }
+
             element.validation.forEach { validation ->
                 validation.values.forEach { value ->
                     val operatorKeys = value.dependentOperator.split(",").map(String::toInt)

@@ -63,5 +63,7 @@ data class ChildrenX(
     @SerialName("validation")
     val validation: List<Validation>,
     @SerialName("elementOptionDependent")
-    val elementOptionDependent: Map<String, String>?
+    val elementOptionDependent: Map<String, String>?,
+    @SerialName("is_autofill")
+    val isAutofill: AutofillItem? = null
 )
