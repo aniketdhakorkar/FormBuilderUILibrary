@@ -17,8 +17,10 @@ fun hideAndShowValidation(
             val (left, right) = condition.split("=").map { it.trim().toIntOrNull() }
             if (left != null && right != null) {
                 val elementValue = parameterValueMap[left]?.value.orEmpty()
+                // Split the elementValue by commas and trim whitespace
+                val elementValues = elementValue.split(",").map { it.trim() }
                 val matchingOptionId = parameterMap[left]?.elementData?.options
-                    ?.firstOrNull { it.pValue.toString() == elementValue }?.optionId ?: 0
+                    ?.firstOrNull { it.pValue.toString() in elementValues }?.optionId ?: 0
                 selectedOptionIds.contains(matchingOptionId) && matchingOptionId == right
             } else {
                 false
@@ -51,10 +53,6 @@ fun hideAndShowValidation(
 
     return visibilityMap
 }
-
-
-
-
 
 
 
