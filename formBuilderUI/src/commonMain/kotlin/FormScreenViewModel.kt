@@ -105,24 +105,6 @@ class FormScreenViewModel : ViewModel() {
         when (event) {
             is FormScreenEvent.OnDropdownValueChanged -> {
 
-                val visibilityMap = hideAndShowValidation(
-                    elementId = event.elementId,
-                    parameterMap = _localParameterMap.value,
-                    selectedOptionIds = listOf(event.option.optionId)
-                )
-
-                visibilityMap.filterValues { !it }.forEach { (key, _) ->
-                    _localParameterValueMap.value =
-                        _localParameterValueMap.value.toMutableMap().apply {
-                            this[key] = InputWrapper(value = "", errorMessage = "")
-                        }
-                }
-
-                _localVisibilityStatusMap.value =
-                    _localVisibilityStatusMap.value.toMutableMap().apply {
-                        putAll(visibilityMap)
-                    }
-
                 try {
                     _localParameterValueMap.value =
                         _localParameterValueMap.value.toMutableMap().apply {
@@ -142,6 +124,26 @@ class FormScreenViewModel : ViewModel() {
                             ?: "An unknown error occurred. Please try again."
                     )
                 }
+
+                val visibilityMap = hideAndShowValidation(
+                    elementId = event.elementId,
+                    parameterMap = _localParameterMap.value,
+                    parameterValueMap = _localParameterValueMap.value,
+                    selectedOptionIds = listOf(event.option.optionId)
+                )
+
+                visibilityMap.filterValues { !it }.forEach { (key, _) ->
+                    _localParameterValueMap.value =
+                        _localParameterValueMap.value.toMutableMap().apply {
+                            this[key] = InputWrapper(value = "", errorMessage = "")
+                        }
+                }
+
+                _localVisibilityStatusMap.value =
+                    _localVisibilityStatusMap.value.toMutableMap().apply {
+                        putAll(visibilityMap)
+                    }
+
 
                 _localParameterMap.value[event.elementId]?.elementData?.let { elementData ->
                     elementData.dataUrl?.let {
@@ -338,45 +340,54 @@ class FormScreenViewModel : ViewModel() {
             }
 
             is FormScreenEvent.OnSubmitButtonClicked -> {
-                _showProgressIndicator.value = true
+                try {
+                    _showProgressIndicator.value = true
 
-                val isFieldEmpty =
-                    _localParameterValueMap.value.isEmpty() || _localParameterValueMap.value.any { (key, inputWrapper) ->
-                        val elementType = _localParameterMap.value[key]?.elementType
-                        val isVisible = _localVisibilityStatusMap.value[key] == true
-                        val isRequired = _localParameterMap.value[key]?.isRequired == "true"
-                        elementType != "ElementLabel" && isVisible && isRequired && inputWrapper.value.isEmpty()
+                    val isFieldEmpty =
+                        _localParameterValueMap.value.isEmpty() || _localParameterValueMap.value.any { (key, inputWrapper) ->
+                            val elementType = _localParameterMap.value[key]?.elementType
+                            val isVisible = _localVisibilityStatusMap.value[key] == true
+                            val isRequired = _localParameterMap.value[key]?.isRequired == "true"
+                            elementType != "ElementLabel" && isVisible && isRequired && inputWrapper.value.isEmpty()
+                        }
+
+                    val firstError =
+                        _localParameterValueMap.value.entries.firstOrNull { it.value.errorMessage.isNotBlank() }
+
+                    when {
+                        isFieldEmpty -> {
+                            SendUiEvent.send(
+                                viewModelScope = viewModelScope,
+                                _uiEvent = _uiEvent,
+                                event = "Field should not be empty"
+                            )
+                        }
+
+                        firstError != null -> {
+                            SendUiEvent.send(
+                                viewModelScope = viewModelScope,
+                                _uiEvent = _uiEvent,
+                                event = firstError.value.errorMessage
+                            )
+                        }
+
+                        else -> {
+                            event.onClick(
+                                _localParameterValueMap.value,
+                                _localVisibilityStatusMap.value
+                            )
+                        }
                     }
 
-                val firstError =
-                    _localParameterValueMap.value.entries.firstOrNull { it.value.errorMessage.isNotBlank() }
-
-                when {
-                    isFieldEmpty -> {
-                        SendUiEvent.send(
-                            viewModelScope = viewModelScope,
-                            _uiEvent = _uiEvent,
-                            event = "Field should not be empty"
-                        )
-                    }
-
-                    firstError != null -> {
-                        SendUiEvent.send(
-                            viewModelScope = viewModelScope,
-                            _uiEvent = _uiEvent,
-                            event = firstError.value.errorMessage
-                        )
-                    }
-
-                    else -> {
-                        event.onClick(
-                            _localParameterValueMap.value,
-                            _localVisibilityStatusMap.value
-                        )
-                    }
+                    _showProgressIndicator.value = false
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    SendUiEvent.send(
+                        viewModelScope = viewModelScope,
+                        _uiEvent = _uiEvent,
+                        event = "An error occurred. try again."
+                    )
                 }
-
-                _showProgressIndicator.value = false
             }
 
             is FormScreenEvent.OnPhotoTaken -> {
@@ -494,6 +505,16 @@ class FormScreenViewModel : ViewModel() {
                     tempList.add(optionValue)
                 }
 
+                _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
+                    put(
+                        event.elementId,
+                        InputWrapper(
+                            value = tempList.joinToString(","),
+                            errorMessage = ""
+                        )
+                    )
+                }
+
                 val selectedOptionIds = tempList.mapNotNull { pValue ->
                     _localParameterMap.value[event.elementId]?.elementData?.options
                         ?.firstOrNull { it.pValue == pValue.toIntOrNull() }
@@ -503,6 +524,7 @@ class FormScreenViewModel : ViewModel() {
                 val visibilityMap = hideAndShowValidation(
                     elementId = event.elementId,
                     parameterMap = _localParameterMap.value,
+                    parameterValueMap = _localParameterValueMap.value,
                     selectedOptionIds = selectedOptionIds
                 )
 
@@ -517,16 +539,6 @@ class FormScreenViewModel : ViewModel() {
                     _localVisibilityStatusMap.value.toMutableMap().apply {
                         putAll(visibilityMap)
                     }
-
-                _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
-                    put(
-                        event.elementId,
-                        InputWrapper(
-                            value = tempList.joinToString(","),
-                            errorMessage = ""
-                        )
-                    )
-                }
             }
         }
     }
@@ -559,6 +571,7 @@ class FormScreenViewModel : ViewModel() {
                 val tempVisibilityMap = hideAndShowValidation(
                     elementId = element.elementId,
                     parameterMap = _localParameterMap.value,
+                    parameterValueMap = _localParameterValueMap.value,
                     selectedOptionIds = listOf((element.elementData.options
                         .firstOrNull { it.pValue == tempPValue }
                         ?.optionId) ?: 0)
