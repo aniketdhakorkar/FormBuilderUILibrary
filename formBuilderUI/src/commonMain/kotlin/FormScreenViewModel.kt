@@ -93,6 +93,8 @@ class FormScreenViewModel : ViewModel() {
     val dependentValueMap = _dependentValueMap.asStateFlow()
     private val _showProgressIndicator = MutableStateFlow(false)
     val showProgressIndicator = _showProgressIndicator.asStateFlow()
+    private val _isSubmitButtonEnabled = MutableStateFlow(true)
+    val isSubmitButtonEnabled = _isSubmitButtonEnabled.asStateFlow()
     private val _imageList = MutableStateFlow<Map<Int, List<ImageModel>>>(emptyMap())
     val imageList = _imageList.asStateFlow()
     private var _activity = ""
@@ -342,6 +344,7 @@ class FormScreenViewModel : ViewModel() {
             is FormScreenEvent.OnSubmitButtonClicked -> {
                 try {
                     _showProgressIndicator.value = true
+                    _isSubmitButtonEnabled.value = false
 
                     val isFieldEmpty =
                         _localParameterValueMap.value.isEmpty() || _localParameterValueMap.value.any { (key, inputWrapper) ->
@@ -361,6 +364,7 @@ class FormScreenViewModel : ViewModel() {
                                 _uiEvent = _uiEvent,
                                 event = "Field should not be empty"
                             )
+                            _isSubmitButtonEnabled.value = true
                         }
 
                         firstError != null -> {
@@ -369,6 +373,7 @@ class FormScreenViewModel : ViewModel() {
                                 _uiEvent = _uiEvent,
                                 event = firstError.value.errorMessage
                             )
+                            _isSubmitButtonEnabled.value = true
                         }
 
                         else -> {
@@ -387,6 +392,7 @@ class FormScreenViewModel : ViewModel() {
                         _uiEvent = _uiEvent,
                         event = "An error occurred. try again."
                     )
+                    _isSubmitButtonEnabled.value = true
                 }
             }
 

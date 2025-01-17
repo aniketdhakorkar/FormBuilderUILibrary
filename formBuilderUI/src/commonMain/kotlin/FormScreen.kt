@@ -73,6 +73,7 @@ fun FormScreen(
     val imageList by viewModel.imageList.collectAsState()
     val showProgressIndicator by viewModel.showProgressIndicator.collectAsState()
     val searchText by viewModel.searchText.collectAsState()
+    val isSubmitButtonEnabled by viewModel.isSubmitButtonEnabled.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(parameterMap) {
@@ -277,6 +278,7 @@ fun FormScreen(
                 if (action != "view")
                     SubmitButton(
                         showProgressIndicator = showProgressIndicator,
+                        isEnabled = isSubmitButtonEnabled,
                         onClick = {
                             viewModel.onEvent(FormScreenEvent.OnSubmitButtonClicked(onClick))
                         }

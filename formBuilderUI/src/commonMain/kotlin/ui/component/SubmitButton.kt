@@ -17,11 +17,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun SubmitButton(showProgressIndicator: Boolean, onClick: () -> Unit) {
+fun SubmitButton(showProgressIndicator: Boolean, onClick: () -> Unit, isEnabled: Boolean) {
     Button(
         modifier = Modifier.padding(bottom = 16.dp),
         shape = RoundedCornerShape(16.dp),
-        onClick = onClick
+        onClick = onClick,
+        enabled = isEnabled
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
