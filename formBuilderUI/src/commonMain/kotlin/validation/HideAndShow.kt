@@ -40,8 +40,8 @@ fun hideAndShowValidation(
             }
 
             dependentIds.split(",").mapNotNull { it.toIntOrNull() }.forEach { dependentId ->
-                visibilityMap[dependentId] = isConditionTrue && isVisible
-                if (!isConditionTrue || !isVisible) {
+                visibilityMap[dependentId] = visibilityMap[dependentId] ?: false || isConditionTrue
+                if (!isConditionTrue) {
                     processDependencies(dependentId, false)
                 }
             }

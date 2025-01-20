@@ -566,6 +566,7 @@ class FormScreenViewModel : ViewModel() {
         _action = action
         _activity = activity
         _form = form
+        _isSubmitButtonEnabled.value = true
         this.httpClient = httpClient
         val tempDependentValueMap = _dependentValueMap.value.toMutableMap()
         val tempDependentOperatorMap = _dependentOperatorMap.value.toMutableMap()
