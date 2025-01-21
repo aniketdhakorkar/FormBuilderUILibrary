@@ -572,30 +572,43 @@ class FormScreenViewModel : ViewModel() {
         val tempDependentOperatorMap = _dependentOperatorMap.value.toMutableMap()
 
         _localParameterMap.value.forEach { (_, element) ->
-            if (element.elementType == "ElementDropDown" && element.isAutofill != null) {
-                val tempPValue =
-                    (_localParameterValueMap.value[element.elementId]?.value ?: "0").toInt()
-                val tempVisibilityMap = hideAndShowValidation(
-                    elementId = element.elementId,
-                    parameterMap = _localParameterMap.value,
-                    parameterValueMap = _localParameterValueMap.value,
-                    selectedOptionIds = listOf((element.elementData.options
-                        .firstOrNull { it.pValue == tempPValue }
-                        ?.optionId) ?: 0)
-                )
 
-                tempVisibilityMap.filterValues { !it }.forEach { (key, _) ->
-                    _localParameterValueMap.value =
-                        _localParameterValueMap.value.toMutableMap().apply {
-                            this[key] = InputWrapper(value = "", errorMessage = "")
-                        }
+            if (element.elementType == "ElementImageUpload") {
+                _imageList.value = _imageList.value.toMutableMap().apply {
+                    this[element.elementId] =
+                        _localParameterValueMap.value[element.elementId]?.value?.split(",")?.map { imagePath ->
+                            ImageModel(
+                                byteImage = null, // Set appropriate ByteArray if required
+                                preSignedUrl = imagePath, // Update if there's a pre-signed URL
+                                isLoading = false
+                            )
+                        } ?: emptyList()
                 }
 
-                _localVisibilityStatusMap.value =
-                    _localVisibilityStatusMap.value.toMutableMap().apply {
-                        putAll(tempVisibilityMap)
+            }
+
+            val tempPValue =
+                (_localParameterValueMap.value[element.elementId]?.value ?: "0").toIntOrNull()
+            val tempVisibilityMap = hideAndShowValidation(
+                elementId = element.elementId,
+                parameterMap = _localParameterMap.value,
+                parameterValueMap = _localParameterValueMap.value,
+                selectedOptionIds = listOf((element.elementData.options
+                    .firstOrNull { it.pValue == tempPValue }
+                    ?.optionId) ?: 0)
+            )
+
+            tempVisibilityMap.filterValues { !it }.forEach { (key, _) ->
+                _localParameterValueMap.value =
+                    _localParameterValueMap.value.toMutableMap().apply {
+                        this[key] = InputWrapper(value = "", errorMessage = "")
                     }
             }
+
+            _localVisibilityStatusMap.value =
+                _localVisibilityStatusMap.value.toMutableMap().apply {
+                    putAll(tempVisibilityMap)
+                }
 
             element.validation.forEach { validation ->
                 validation.values.forEach { value ->

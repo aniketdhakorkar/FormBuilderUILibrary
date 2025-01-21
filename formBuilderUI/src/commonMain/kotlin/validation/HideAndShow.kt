@@ -11,13 +11,12 @@ fun hideAndShowValidation(
 ): Map<Int, Boolean> {
     val visibilityMap = mutableMapOf<Int, Boolean>()
 
-    // Check if a condition holds true
-    fun isConditionSatisfied(condition: String): Boolean {
-        return if ("=" in condition) {
+    // Helper function to check if a condition is satisfied
+    fun isConditionSatisfied(condition: String, currentElementId: Int): Boolean {
+        val conditionResult = if ("=" in condition) {
             val (left, right) = condition.split("=").map { it.trim().toIntOrNull() }
             if (left != null && right != null) {
                 val elementValue = parameterValueMap[left]?.value.orEmpty()
-                // Split the elementValue by commas and trim whitespace
                 val elementValues = elementValue.split(",").map { it.trim() }
                 val matchingOptionId = parameterMap[left]?.elementData?.options
                     ?.firstOrNull { it.pValue.toString() in elementValues }?.optionId ?: 0
@@ -28,19 +27,34 @@ fun hideAndShowValidation(
         } else {
             condition.toIntOrNull()?.let { selectedOptionIds.contains(it) } ?: false
         }
+
+        if (conditionResult) {
+            val parentPValue = parameterMap[elementId]?.elementData?.options
+                ?.firstOrNull { selectedOptionIds.contains(it.optionId) }?.pValue ?: 0
+
+            val currentPValue = parameterMap[currentElementId]?.elementData?.options
+                ?.firstOrNull { selectedOptionIds.contains(it.optionId) }?.pValue ?: 0
+
+            return parentPValue == currentPValue
+        }
+
+        return false
     }
 
-    // Process dependencies recursively
+    // Recursive function to process dependencies
     fun processDependencies(currentId: Int, isVisible: Boolean) {
         parameterMap[currentId]?.elementOptionDependent?.forEach { (condition, dependentIds) ->
             val isConditionTrue = if ("|" in condition) {
-                condition.split("|").any { isConditionSatisfied(it.trim()) }
+                condition.split("|").any { isConditionSatisfied(it.trim(), currentId) }
             } else {
-                isConditionSatisfied(condition)
+                isConditionSatisfied(condition, currentId)
             }
 
             dependentIds.split(",").mapNotNull { it.toIntOrNull() }.forEach { dependentId ->
-                visibilityMap[dependentId] = visibilityMap[dependentId] ?: false || isConditionTrue
+                if (visibilityMap[dependentId] != true) {
+                    visibilityMap[dependentId] = isConditionTrue
+                }
+
                 if (!isConditionTrue) {
                     processDependencies(dependentId, false)
                 }
@@ -53,6 +67,5 @@ fun hideAndShowValidation(
 
     return visibilityMap
 }
-
 
 
