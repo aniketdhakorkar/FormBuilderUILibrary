@@ -573,18 +573,18 @@ class FormScreenViewModel : ViewModel() {
 
         _localParameterMap.value.forEach { (_, element) ->
 
-            if (element.elementType == "ElementImageUpload") {
+            if (element.elementType == "ElementImageUpload" && !_localParameterValueMap.value[element.elementId]?.value.isNullOrEmpty()) {
                 _imageList.value = _imageList.value.toMutableMap().apply {
                     this[element.elementId] =
-                        _localParameterValueMap.value[element.elementId]?.value?.split(",")?.map { imagePath ->
-                            ImageModel(
-                                byteImage = null, // Set appropriate ByteArray if required
-                                preSignedUrl = imagePath, // Update if there's a pre-signed URL
-                                isLoading = false
-                            )
-                        } ?: emptyList()
+                        _localParameterValueMap.value[element.elementId]?.value?.split(",")
+                            ?.map { imagePath ->
+                                ImageModel(
+                                    byteImage = null,
+                                    preSignedUrl = imagePath,
+                                    isLoading = false
+                                )
+                            } ?: emptyList()
                 }
-
             }
 
             val tempPValue =
