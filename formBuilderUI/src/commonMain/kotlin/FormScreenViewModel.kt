@@ -402,51 +402,18 @@ class FormScreenViewModel : ViewModel() {
                         _imageList.value[event.elementId]?.toMutableList() ?: mutableListOf()
                     currentImages.add(event.image)
 
-                    _imageList.value = _imageList.value.toMutableMap().apply {
-                        this[event.elementId] = currentImages
-                    }
+                    updateImageList(event.elementId, currentImages)
 
-                    val resourcePath: String?
-
-                    try {
-                        resourcePath = saveImageApi(image = event.image)
+                    val resourcePath = try {
+                        saveImageApi(image = event.image)
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        val updatedImages = currentImages.toMutableList().apply {
-                            removeLast()
-                        }
-
-                        _imageList.value = _imageList.value.toMutableMap().apply {
-                            this[event.elementId] = updatedImages
-                        }
-
-                        SendUiEvent.send(
-                            viewModelScope = viewModelScope,
-                            _uiEvent = _uiEvent,
-                            event = "An error occurred while uploading your image.\nPlease check your internet connection and try again."
-                        )
+                        handleImageUploadError(event.elementId, currentImages)
                         return@launch
                     }
 
-                    _imageList.value = _imageList.value.mapValues { (key, imageList) ->
-                        if (key == event.elementId) {
-                            imageList.map { imageModel ->
-                                imageModel.copy(
-                                    isLoading = false,
-                                    resourcePath = resourcePath
-                                )
-                            }
-                        } else imageList
-                    }
-
-                    _localParameterValueMap.value =
-                        _localParameterValueMap.value.toMutableMap().apply {
-                            this[event.elementId] = InputWrapper(
-                                value = _imageList.value[event.elementId]?.joinToString(",")
-                                    ?: "",
-                                errorMessage = ""
-                            )
-                        }
+                    updateResourcePath(event.elementId, resourcePath)
+                    updateLocalParameterValue(event.elementId)
                 }
             }
 
@@ -649,6 +616,49 @@ class FormScreenViewModel : ViewModel() {
 
         _dependentOperatorMap.value = tempDependentOperatorMap
         _dependentValueMap.value = tempDependentValueMap
+    }
+
+    private fun updateImageList(elementId: Int, images: List<ImageModel>) {
+        _imageList.value = _imageList.value.toMutableMap().apply {
+            this[elementId] = images
+        }
+    }
+
+    private fun handleImageUploadError(elementId: Int, currentImages: MutableList<ImageModel>) {
+        val updatedImages = currentImages.toMutableList().apply { removeLast() }
+        updateImageList(elementId, updatedImages)
+
+        SendUiEvent.send(
+            viewModelScope = viewModelScope,
+            _uiEvent = _uiEvent,
+            event = "An error occurred while uploading your image.\nPlease check your internet connection and try again."
+        )
+    }
+
+    private fun updateResourcePath(elementId: Int, resourcePath: String) {
+        _imageList.value = _imageList.value.mapValues { (key, imageList) ->
+            if (key == elementId) {
+                imageList.map { imageModel ->
+                    if (imageModel.resourcePath.isEmpty()) {
+                        imageModel.copy(isLoading = false, resourcePath = resourcePath)
+                    } else {
+                        imageModel
+                    }
+                }
+            } else {
+                imageList
+            }
+        }
+    }
+
+    private fun updateLocalParameterValue(elementId: Int) {
+        val resourcePathList = _imageList.value[elementId]?.map { it.resourcePath } ?: emptyList()
+        _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
+            this[elementId] = InputWrapper(
+                value = resourcePathList.joinToString(","),
+                errorMessage = ""
+            )
+        }
     }
 
     private suspend fun remoteApi(

@@ -80,8 +80,8 @@ class MainActivity : ComponentActivity() {
                                 parameters {
                                     append("app_type", "1")
                                     append("project_id", "6")
-                                    append("program_id", "16")
-                                    append("category_id", "13")
+                                    append("program_id", "10")
+                                    append("category_id", "3")
                                 }
                             )
                         )
@@ -94,8 +94,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
 
-            /*val parameters by _parameters.asStateFlow().collectAsState()
-            val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
+            /*val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
             val parameterMap by _parameterMap.asStateFlow().collectAsState()
             val visibilityMap by _visibilityMap.asStateFlow().collectAsState()
             val enabledMap by _enabledMap.asStateFlow().collectAsState()
@@ -171,7 +170,7 @@ class MainActivity : ComponentActivity() {
             bearer {
                 loadTokens {
                     BearerTokens(
-                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM1OTA5ODYyLCJpYXQiOjE3MzU5MDYyNjIsImp0aSI6IjAwOWQyNWRhZGU5MTRkMTBiNjI4M2VhMzkzNzMwMGJlIiwidXNlcl9pZCI6MTAyfQ.1i_e8j7N4RpdYRVQPA-efxeioIVYT-8jzik8Npgz_cQ",
+                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NjM3MjMyLCJpYXQiOjE3Mzc2MzM2MzIsImp0aSI6IjQxM2EyM2VkYzM4ZDQ1MTU5ZGFjMzg5NjI3YjU2OGJmIiwidXNlcl9pZCI6MTAzfQ.C1RcqdRAsUBqeFwJWlM1gdSURIARIXaIfaociaZ_XhU",
                         refreshToken = null
                     )
                 }
