@@ -547,7 +547,7 @@ class FormScreenViewModel : ViewModel() {
                             ?.map { imagePath ->
                                 ImageModel(
                                     byteImage = null,
-                                    preSignedUrl = imagePath,
+                                    resourcePath = imagePath,
                                     isLoading = false
                                 )
                             } ?: emptyList()

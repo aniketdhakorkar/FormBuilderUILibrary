@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        /*val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
+        val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
         val _parameterValueMap = MutableStateFlow<Map<Int, InputWrapper>>(mutableMapOf())
         val _parameterMap = MutableStateFlow<Map<Int, ChildrenX>>(mutableMapOf())
         val _visibilityMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
@@ -90,11 +90,11 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }*/
+        }
 
         setContent {
 
-            /*val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
+            val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
             val parameterMap by _parameterMap.asStateFlow().collectAsState()
             val visibilityMap by _visibilityMap.asStateFlow().collectAsState()
             val enabledMap by _enabledMap.asStateFlow().collectAsState()
@@ -139,11 +139,11 @@ class MainActivity : ComponentActivity() {
                 visibilityMap = visibilityMap,
                 enabledStatusMap = enabledMap,
                 httpClient = httpClient
-            )*/
+            )
         }
     }
 
-    /*private fun provideHttpClient(): HttpClient = HttpClient {
+    private fun provideHttpClient(): HttpClient = HttpClient {
         install(HttpTimeout) {
             socketTimeoutMillis = 60_000
             requestTimeoutMillis = 60_000
@@ -170,11 +170,11 @@ class MainActivity : ComponentActivity() {
             bearer {
                 loadTokens {
                     BearerTokens(
-                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NjM3MjMyLCJpYXQiOjE3Mzc2MzM2MzIsImp0aSI6IjQxM2EyM2VkYzM4ZDQ1MTU5ZGFjMzg5NjI3YjU2OGJmIiwidXNlcl9pZCI6MTAzfQ.C1RcqdRAsUBqeFwJWlM1gdSURIARIXaIfaociaZ_XhU",
+                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NzAxOTczLCJpYXQiOjE3Mzc2OTgzNzMsImp0aSI6IjgzMTFlYmY1YzkwNTQ2ZWY5ZjFlMWNhZTM0YThmNWYwIiwidXNlcl9pZCI6MTAzfQ.NNQzUQfZgMEQ6gqVqDBxzpgKsehbrnIKD0Fno6hF-OA",
                         refreshToken = null
                     )
                 }
             }
         }
-    }*/
+    }
 }

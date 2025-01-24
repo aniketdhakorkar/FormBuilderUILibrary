@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Button
@@ -188,13 +189,15 @@ fun ImageContent(image: ImageModel) {
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.fillMaxSize()
         )
-    } else {
+    } else if (image.preSignedUrl.isNotEmpty()) {
         AsyncImage(
             model = image.preSignedUrl,
             contentDescription = null,
             contentScale = ContentScale.FillBounds,
             modifier = Modifier.fillMaxSize()
         )
+    } else {
+        Image(imageVector = Icons.Filled.Image, contentDescription = null)
     }
 
     if (image.isLoading) {
