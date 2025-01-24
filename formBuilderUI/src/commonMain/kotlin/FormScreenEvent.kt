@@ -26,4 +26,6 @@ sealed class FormScreenEvent {
 
     data class OnCheckboxValueChanged(val elementId: Int, val option: DropdownOption) :
         FormScreenEvent()
+
+    data object OnImagePreviewDialogDismiss : FormScreenEvent()
 }

@@ -67,15 +67,17 @@ fun CreateCamera(
     isMandatory: String,
     imageList: List<ImageModel>,
     action: String,
+    isViewCamera: Boolean,
     onPhotoTaken: (ImageModel) -> Unit,
     onPhotoDeleteButtonClicked: (Int) -> Unit,
-    onImageViewButtonClicked: (ImageModel) -> Unit
+    onImageViewButtonClicked: (ImageModel) -> Unit,
+    onImagePreviewDialogDismiss: () -> Unit
 ) {
     val permissions = providePermissions()
     val cameraPermissionState = remember { mutableStateOf(permissions.hasCameraPermission()) }
     val cameraController = remember { mutableStateOf<CameraController?>(null) }
     val isOpenCamera = remember { mutableStateOf(false) }
-    val isViewCamera = remember { mutableStateOf(false) }
+    val selectedImageIndex = remember { mutableStateOf<Int?>(null) }
 
     if (!cameraPermissionState.value) {
         permissions.RequestCameraPermission(
@@ -99,21 +101,27 @@ fun CreateCamera(
                     index = index,
                     action = action,
                     onPhotoDeleteButtonClicked = onPhotoDeleteButtonClicked,
-                    onPhotoClicked = { isViewCamera.value = true },
+                    onPhotoClicked = {
+                        selectedImageIndex.value = it
+                    },
                     onImageViewButtonClicked = onImageViewButtonClicked
                 )
-
-                if (isViewCamera.value) {
-                    ImagePreviewDialog(
-                        imageModel = image,
-                        onDismiss = { isViewCamera.value = false }
-                    )
-                }
             }
 
             item {
                 AddPhotoButton { isOpenCamera.value = true }
             }
+        }
+    }
+
+    if (isViewCamera) {
+        selectedImageIndex.value?.let { index ->
+            ImagePreviewDialog(
+                imageModel = imageList.getOrNull(index),
+                onDismiss = onImagePreviewDialogDismiss
+            )
+        } ?: run {
+            onImagePreviewDialogDismiss
         }
     }
 
@@ -132,7 +140,7 @@ fun DisplayImageItem(
     index: Int,
     action: String,
     onPhotoDeleteButtonClicked: (Int) -> Unit,
-    onPhotoClicked: () -> Unit,
+    onPhotoClicked: (Int) -> Unit,
     onImageViewButtonClicked: (ImageModel) -> Unit
 ) {
     Box(
@@ -141,7 +149,10 @@ fun DisplayImageItem(
             .height(280.dp)
             .padding(end = 8.dp)
             .clip(RoundedCornerShape(8.dp))
-            .clickable { onPhotoClicked() }
+            .clickable {
+                onPhotoClicked(index)
+                onImageViewButtonClicked(image)
+            }
             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)),
         contentAlignment = Alignment.Center
     ) {
@@ -149,18 +160,22 @@ fun DisplayImageItem(
 
         when (action) {
             "view", "edit" -> {
-                Button(
-                    onClick = {
-                        onImageViewButtonClicked(image)
-                        onPhotoClicked()
-                    },
-                    modifier = Modifier.align(Alignment.Center)
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(imageVector = Icons.Default.RemoveRedEye, contentDescription = "View")
-                        Text(text = "View")
+                if ((image.preSignedUrl.isEmpty() && image.byteImage == null))
+                    Button(
+                        onClick = {
+                            onPhotoClicked(index)
+                            onImageViewButtonClicked(image)
+                        },
+                        modifier = Modifier.align(Alignment.Center)
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(
+                                imageVector = Icons.Default.RemoveRedEye,
+                                contentDescription = "View"
+                            )
+                            Text(text = "View")
+                        }
                     }
-                }
             }
         }
 
@@ -275,7 +290,7 @@ fun CameraDialog(
 }
 
 @Composable
-fun ImagePreviewDialog(imageModel: ImageModel, onDismiss: () -> Unit) {
+fun ImagePreviewDialog(imageModel: ImageModel?, onDismiss: () -> Unit) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
 
@@ -306,12 +321,12 @@ fun ImagePreviewDialog(imageModel: ImageModel, onDismiss: () -> Unit) {
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ImageContentWithTransform(
-    imageModel: ImageModel,
+    imageModel: ImageModel?,
     state: TransformableState,
     scale: Float,
     offset: Offset
 ) {
-    if (imageModel.byteImage != null) {
+    if (imageModel?.byteImage != null) {
         Image(
             bitmap = imageModel.byteImage.decodeToImageBitmap(),
             contentDescription = null,
@@ -334,7 +349,7 @@ fun ImageContentWithTransform(
                     translationY = offset.y
                 }
                 .transformable(state),
-            model = imageModel.preSignedUrl,
+            model = imageModel?.preSignedUrl ?: "",
             contentDescription = null
         )
     }

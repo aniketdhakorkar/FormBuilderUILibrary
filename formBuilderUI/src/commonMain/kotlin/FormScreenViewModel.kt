@@ -97,6 +97,8 @@ class FormScreenViewModel : ViewModel() {
     val isSubmitButtonEnabled = _isSubmitButtonEnabled.asStateFlow()
     private val _imageList = MutableStateFlow<Map<Int, List<ImageModel>>>(emptyMap())
     val imageList = _imageList.asStateFlow()
+    private val _isViewCamera = MutableStateFlow(false)
+    val isViewCamera = _isViewCamera.asStateFlow()
     private var _activity = ""
     private var _form = ""
     private var _action = ""
@@ -441,27 +443,30 @@ class FormScreenViewModel : ViewModel() {
             }
 
             is FormScreenEvent.OnImageViewButtonClicked -> {
-                viewModelScope.launch {
-                    try {
-                        val url = getImagePreSignedUrl(urls = event.image.resourcePath)
+                if (event.image.preSignedUrl.isEmpty() && event.image.byteImage == null) {
+                    viewModelScope.launch {
+                        try {
+                            val url = getImagePreSignedUrl(urls = event.image.resourcePath)
 
-                        _imageList.value = _imageList.value.mapValues { (key, imageList) ->
-                            if (key == event.elementId) {
-                                imageList.map { imageModel ->
-                                    if (imageModel.resourcePath == event.image.resourcePath) {
-                                        imageModel.copy(
-                                            isLoading = false,
-                                            preSignedUrl = url
-                                        )
-                                    } else
-                                        imageModel
-                                }
-                            } else imageList
+                            _imageList.value = _imageList.value.mapValues { (key, imageList) ->
+                                if (key == event.elementId) {
+                                    imageList.map { imageModel ->
+                                        if (imageModel.resourcePath == event.image.resourcePath) {
+                                            imageModel.copy(
+                                                isLoading = false,
+                                                preSignedUrl = url
+                                            )
+                                        } else
+                                            imageModel
+                                    }
+                                } else imageList
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
                     }
                 }
+                _isViewCamera.value = true
             }
 
             is FormScreenEvent.OnCheckboxValueChanged -> {
@@ -512,6 +517,10 @@ class FormScreenViewModel : ViewModel() {
                     _localVisibilityStatusMap.value.toMutableMap().apply {
                         putAll(visibilityMap)
                     }
+            }
+
+            FormScreenEvent.OnImagePreviewDialogDismiss -> {
+                _isViewCamera.value = false
             }
         }
     }

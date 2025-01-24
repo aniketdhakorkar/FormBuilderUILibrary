@@ -74,6 +74,7 @@ fun FormScreen(
     val showProgressIndicator by viewModel.showProgressIndicator.collectAsState()
     val searchText by viewModel.searchText.collectAsState()
     val isSubmitButtonEnabled by viewModel.isSubmitButtonEnabled.collectAsState()
+    val isViewCamera by viewModel.isViewCamera.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(parameterMap) {
@@ -221,6 +222,7 @@ fun FormScreen(
                                     style = style,
                                     imageList = imageList[elementId] ?: emptyList(),
                                     action = action,
+                                    isViewCamera = isViewCamera,
                                     onPhotoTaken = {
                                         viewModel.onEvent(
                                             FormScreenEvent.OnPhotoTaken(
@@ -243,6 +245,11 @@ fun FormScreen(
                                                 elementId = elementId,
                                                 image = it
                                             )
+                                        )
+                                    },
+                                    onImagePreviewDialogDismiss = {
+                                        viewModel.onEvent(
+                                            FormScreenEvent.OnImagePreviewDialogDismiss
                                         )
                                     }
                                 )
