@@ -543,6 +543,10 @@ class FormScreenViewModel : ViewModel() {
         _activity = activity
         _form = form
         _isSubmitButtonEnabled.value = true
+        _imageList.value = _imageList.value.toMutableMap().apply {
+            clear()
+        }
+        _isViewCamera.value = false
         this.httpClient = httpClient
         val tempDependentValueMap = _dependentValueMap.value.toMutableMap()
         val tempDependentOperatorMap = _dependentOperatorMap.value.toMutableMap()
@@ -634,7 +638,12 @@ class FormScreenViewModel : ViewModel() {
     }
 
     private fun handleImageUploadError(elementId: Int, currentImages: MutableList<ImageModel>) {
-        val updatedImages = currentImages.toMutableList().apply { removeLast() }
+        val updatedImages = if (currentImages.isNotEmpty()) {
+            currentImages.toMutableList().apply { removeAt(lastIndex) }
+        } else {
+            currentImages.toMutableList()
+        }
+
         updateImageList(elementId, updatedImages)
 
         SendUiEvent.send(
