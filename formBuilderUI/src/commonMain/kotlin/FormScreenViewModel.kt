@@ -612,9 +612,28 @@ class FormScreenViewModel : ViewModel() {
                     try {
                         remoteApi(
                             url = element.elementData.dataUrl,
-                            elementId = element.elementId,
-                            filterMap = emptyMap()
+                            filterMap = emptyMap(),
+                            elementId = element.elementId
                         )
+
+                        element.elementData.dependentApi?.forEach { api ->
+                            val filterMap = api.parameter.mapValues { (_, value) ->
+                                val paramValue =
+                                    _localParameterValueMap.value[value]?.value.orEmpty()
+                                if (_action == "filter") {
+                                    Json.decodeFromString<DropdownOption>(paramValue).pValue.toString()
+                                } else {
+                                    paramValue.ifEmpty { "0" }
+                                }
+                            }
+                            val finalFilterMap =
+                                if (filterMap.values.contains("0")) emptyMap() else filterMap
+                            remoteApi(
+                                url = api.url,
+                                filterMap = finalFilterMap,
+                                elementId = api.dependent
+                            )
+                        }
                     } catch (e: Exception) {
                         e.printStackTrace()
                         SendUiEvent.send(
