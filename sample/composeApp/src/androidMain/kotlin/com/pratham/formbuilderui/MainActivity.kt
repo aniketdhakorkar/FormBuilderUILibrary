@@ -80,8 +80,8 @@ class MainActivity : ComponentActivity() {
                                 parameters {
                                     append("app_type", "1")
                                     append("project_id", "6")
-                                    append("program_id", "10")
-                                    append("category_id", "3")
+                                    append("program_id", "20")
+                                    append("category_id", "18")
                                 }
                             )
                         )
@@ -170,7 +170,7 @@ class MainActivity : ComponentActivity() {
             bearer {
                 loadTokens {
                     BearerTokens(
-                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM3NjM3MjMyLCJpYXQiOjE3Mzc2MzM2MzIsImp0aSI6IjQxM2EyM2VkYzM4ZDQ1MTU5ZGFjMzg5NjI3YjU2OGJmIiwidXNlcl9pZCI6MTAzfQ.C1RcqdRAsUBqeFwJWlM1gdSURIARIXaIfaociaZ_XhU",
+                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM4OTMyOTkzLCJpYXQiOjE3Mzg5MjkzOTMsImp0aSI6Ijk0NTcwNzk4NjMzOTQxMmE5ZjMyZmFmZWUzZDcwMDQ0IiwidXNlcl9pZCI6Mn0.TzONpcn9jIjXRmzk3-Uu1a9tdbEGWchgggqgRHYKkJo",
                         refreshToken = null
                     )
                 }

@@ -36,13 +36,14 @@ import ui.component.CreateLabel
 import ui.component.CreateTextField
 import ui.component.SubmitButton
 import ui.theme.AppTheme
-import util.DependentValueCustomText
+import model.DependentValueCustomText
 import util.InputWrapper
 import model.parameters.ChildrenX
 import model.parameters.toDropdown
 import okio.FileSystem
 import ui.component.CreateCamera
 import ui.component.CreateCheckbox
+import ui.component.CreateDatePicker
 import util.SnackbarController
 
 @Composable
@@ -273,6 +274,27 @@ fun FormScreen(
                                             FormScreenEvent.OnCheckboxValueChanged(
                                                 elementId = elementId,
                                                 option = option
+                                            )
+                                        )
+                                    }
+                                )
+                            }
+
+                            "ElementDate" -> {
+                                CreateDatePicker(
+                                    question = question,
+                                    description = description,
+                                    style = style,
+                                    isMandatory = isMandatory,
+                                    isVisible = isVisible,
+                                    isEnabled = isEnabled,
+                                    focusManager = focusManager,
+                                    dateValue = parameterValue,
+                                    onDateValueChanged = {
+                                        viewModel.onEvent(
+                                            FormScreenEvent.OnDateValueChanged(
+                                                elementId = elementId,
+                                                value = it
                                             )
                                         )
                                     }

@@ -7,15 +7,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import util.DependentValueCustomText
+import model.DependentValueCustomText
 
 @Composable
 fun SupportingText(
-    dependentValueCustomText: DependentValueCustomText,
+    dependentValueCustomText: DependentValueCustomText? = null  ,
     errorMessage: String
 ) {
     Column {
-        if (dependentValueCustomText.isShow) {
+        if ((dependentValueCustomText?.isShow == true)) {
             Text(
                 text = "${dependentValueCustomText.expression} ${dependentValueCustomText.value}",
                 fontStyle = FontStyle.Italic,

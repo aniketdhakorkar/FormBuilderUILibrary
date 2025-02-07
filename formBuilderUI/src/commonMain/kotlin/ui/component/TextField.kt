@@ -23,7 +23,7 @@ import ui.helper.CardContainer
 import ui.helper.SupportingText
 import ui.helper.bringIntoView
 import ui.helper.getOutlinedTextFieldColors
-import util.DependentValueCustomText
+import model.DependentValueCustomText
 import util.InputWrapper
 import model.parameters.Style
 

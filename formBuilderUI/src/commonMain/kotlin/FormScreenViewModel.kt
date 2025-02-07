@@ -27,7 +27,7 @@ import kotlinx.io.IOException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import model.filter.FilterResponseDto
-import util.DependentValueCustomText
+import model.DependentValueCustomText
 import util.InputWrapper
 import util.SendUiEvent
 import model.parameters.ChildrenX
@@ -521,6 +521,17 @@ class FormScreenViewModel : ViewModel() {
 
             FormScreenEvent.OnImagePreviewDialogDismiss -> {
                 _isViewCamera.value = false
+            }
+
+            is FormScreenEvent.OnDateValueChanged ->{
+                _localParameterValueMap.value = _localParameterValueMap.value
+                    .toMutableMap()
+                    .apply {
+                        put(
+                            event.elementId,
+                            InputWrapper(value = event.value, errorMessage = "")
+                        )
+                    }
             }
         }
     }

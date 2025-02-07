@@ -1,6 +1,6 @@
 package validation
 
-import util.DependentValueCustomText
+import model.DependentValueCustomText
 import util.InputWrapper
 import util.Quadruple
 

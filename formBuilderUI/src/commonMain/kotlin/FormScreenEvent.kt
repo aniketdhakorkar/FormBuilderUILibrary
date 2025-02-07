@@ -28,4 +28,6 @@ sealed class FormScreenEvent {
         FormScreenEvent()
 
     data object OnImagePreviewDialogDismiss : FormScreenEvent()
+
+    data class OnDateValueChanged(val elementId: Int, val value: String) : FormScreenEvent()
 }
