@@ -80,8 +80,8 @@ class MainActivity : ComponentActivity() {
                                 parameters {
                                     append("app_type", "1")
                                     append("project_id", "6")
-                                    append("program_id", "20")
-                                    append("category_id", "18")
+                                    append("program_id", "4")
+                                    append("category_id", "17")
                                 }
                             )
                         )
@@ -90,8 +90,8 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }*/
-
+        }
+*/
         setContent {
 
             /*val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
@@ -170,7 +170,7 @@ class MainActivity : ComponentActivity() {
             bearer {
                 loadTokens {
                     BearerTokens(
-                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM4OTMyOTkzLCJpYXQiOjE3Mzg5MjkzOTMsImp0aSI6Ijk0NTcwNzk4NjMzOTQxMmE5ZjMyZmFmZWUzZDcwMDQ0IiwidXNlcl9pZCI6Mn0.TzONpcn9jIjXRmzk3-Uu1a9tdbEGWchgggqgRHYKkJo",
+                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5NTM3ODIzLCJpYXQiOjE3Mzk1MzQyMjMsImp0aSI6IjRiNGE3YzE3YTJkZTRiNDhiOTgxNzNkYTMzYzM2M2IzIiwidXNlcl9pZCI6Mn0.SSGoB-tPLrr_vpuqPLLAWBq1pORJht-YWt6I9e_-mzw",
                         refreshToken = null
                     )
                 }

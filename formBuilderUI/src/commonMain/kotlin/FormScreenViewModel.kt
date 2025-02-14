@@ -523,7 +523,7 @@ class FormScreenViewModel : ViewModel() {
                 _isViewCamera.value = false
             }
 
-            is FormScreenEvent.OnDateValueChanged ->{
+            is FormScreenEvent.OnDateValueChanged -> {
                 _localParameterValueMap.value = _localParameterValueMap.value
                     .toMutableMap()
                     .apply {
@@ -562,99 +562,119 @@ class FormScreenViewModel : ViewModel() {
         val tempDependentValueMap = _dependentValueMap.value.toMutableMap()
         val tempDependentOperatorMap = _dependentOperatorMap.value.toMutableMap()
 
-        _localParameterMap.value.forEach { (_, element) ->
+        try {
+            _localParameterMap.value.forEach { (_, element) ->
 
-            if (element.elementType == "ElementImageUpload" && !_localParameterValueMap.value[element.elementId]?.value.isNullOrEmpty()) {
-                _imageList.value = _imageList.value.toMutableMap().apply {
-                    this[element.elementId] =
-                        _localParameterValueMap.value[element.elementId]?.value?.split(",")
-                            ?.map { imagePath ->
-                                ImageModel(
-                                    byteImage = null,
-                                    resourcePath = imagePath,
-                                    isLoading = false
-                                )
-                            } ?: emptyList()
-                }
-            }
-
-            val tempPValue =
-                (_localParameterValueMap.value[element.elementId]?.value ?: "0").toIntOrNull()
-            val tempVisibilityMap = hideAndShowValidation(
-                elementId = element.elementId,
-                parameterMap = _localParameterMap.value,
-                parameterValueMap = _localParameterValueMap.value,
-                selectedOptionIds = listOf((element.elementData.options
-                    .firstOrNull { it.pValue == tempPValue }
-                    ?.optionId) ?: 0)
-            )
-
-            tempVisibilityMap.filterValues { !it }.forEach { (key, _) ->
-                _localParameterValueMap.value =
-                    _localParameterValueMap.value.toMutableMap().apply {
-                        this[key] = InputWrapper(value = "", errorMessage = "")
-                    }
-            }
-
-            _localVisibilityStatusMap.value =
-                _localVisibilityStatusMap.value.toMutableMap().apply {
-                    putAll(tempVisibilityMap)
-                }
-
-            element.validation.forEach { validation ->
-                validation.values.forEach { value ->
-                    val operatorKeys = value.dependentOperator.split(",").map(String::toInt)
-                    val resultValues = value.dependentResult.split(",").map(String::toInt)
-
-                    tempDependentOperatorMap[operatorKeys] = resultValues
-
-                    operatorKeys.forEach { key ->
-                        tempDependentValueMap[key] = DependentValueCustomText(
-                            isShow = false,
-                            expression = value.dependant,
-                            value = ""
-                        )
+                if (element.elementType == "ElementImageUpload" && !_localParameterValueMap.value[element.elementId]?.value.isNullOrEmpty()) {
+                    _imageList.value = _imageList.value.toMutableMap().apply {
+                        this[element.elementId] =
+                            _localParameterValueMap.value[element.elementId]?.value?.split(",")
+                                ?.map { imagePath ->
+                                    ImageModel(
+                                        byteImage = null,
+                                        resourcePath = imagePath,
+                                        isLoading = false
+                                    )
+                                } ?: emptyList()
                     }
                 }
-            }
-
-            if (!element.elementData.dataUrl.isNullOrBlank()) {
-                viewModelScope.launch {
-                    try {
-                        remoteApi(
-                            url = element.elementData.dataUrl,
-                            filterMap = emptyMap(),
-                            elementId = element.elementId
-                        )
-
-                        element.elementData.dependentApi?.forEach { api ->
-                            val filterMap = api.parameter.mapValues { (_, value) ->
-                                val paramValue =
-                                    _localParameterValueMap.value[value]?.value.orEmpty()
-                                if (_action == "filter") {
-                                    Json.decodeFromString<DropdownOption>(paramValue).pValue.toString()
-                                } else {
-                                    paramValue.ifEmpty { "0" }
-                                }
+                val tempPValue = when (_action) {
+                    "filter" -> {
+                        _localParameterValueMap.value[element.elementId]?.value
+                            ?.let {
+                                if (it.isNotEmpty() && it.contains("{"))
+                                    Json.decodeFromString<DropdownOption>(it).pValue
+                                else
+                                    _localParameterValueMap.value[element.elementId]?.value?.toIntOrNull()
+                                        ?: 0
                             }
-                            val finalFilterMap =
-                                if (filterMap.values.contains("0")) emptyMap() else filterMap
-                            remoteApi(
-                                url = api.url,
-                                filterMap = finalFilterMap,
-                                elementId = api.dependent
+                            ?: 0
+                    }
+
+                    else -> _localParameterValueMap.value[element.elementId]?.value?.toIntOrNull()
+                        ?: 0
+                }
+
+                if (!element.elementOptionDependent.isNullOrEmpty()) {
+                    val tempVisibilityMap = hideAndShowValidation(
+                        elementId = element.elementId,
+                        parameterMap = _localParameterMap.value,
+                        parameterValueMap = _localParameterValueMap.value,
+                        selectedOptionIds = listOf((element.elementData.options
+                            .firstOrNull { it.pValue == tempPValue }
+                            ?.optionId) ?: 0)
+                    )
+
+                    tempVisibilityMap.filterValues { !it }.forEach { (key, _) ->
+                        _localParameterValueMap.value =
+                            _localParameterValueMap.value.toMutableMap().apply {
+                                this[key] = InputWrapper(value = "", errorMessage = "")
+                            }
+                    }
+
+                    _localVisibilityStatusMap.value =
+                        _localVisibilityStatusMap.value.toMutableMap().apply {
+                            putAll(tempVisibilityMap)
+                        }
+                }
+
+                element.validation.forEach { validation ->
+                    validation.values.forEach { value ->
+                        val operatorKeys = value.dependentOperator.split(",").map(String::toInt)
+                        val resultValues = value.dependentResult.split(",").map(String::toInt)
+
+                        tempDependentOperatorMap[operatorKeys] = resultValues
+
+                        operatorKeys.forEach { key ->
+                            tempDependentValueMap[key] = DependentValueCustomText(
+                                isShow = false,
+                                expression = value.dependant,
+                                value = ""
                             )
                         }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        SendUiEvent.send(
-                            viewModelScope = viewModelScope,
-                            _uiEvent = _uiEvent,
-                            event = e.message ?: "An unknown error occurred. Please try again."
-                        )
+                    }
+                }
+
+                if (!element.elementData.dataUrl.isNullOrBlank()) {
+                    viewModelScope.launch {
+                        try {
+                            remoteApi(
+                                url = element.elementData.dataUrl,
+                                filterMap = emptyMap(),
+                                elementId = element.elementId
+                            )
+
+                            element.elementData.dependentApi?.forEach { api ->
+                                val filterMap = api.parameter.mapValues { (_, value) ->
+                                    val paramValue =
+                                        _localParameterValueMap.value[value]?.value.orEmpty()
+                                    if (_action == "filter") {
+                                        Json.decodeFromString<DropdownOption>(paramValue).pValue.toString()
+                                    } else {
+                                        paramValue.ifEmpty { "0" }
+                                    }
+                                }
+                                val finalFilterMap =
+                                    if (filterMap.values.contains("0")) emptyMap() else filterMap
+                                remoteApi(
+                                    url = api.url,
+                                    filterMap = finalFilterMap,
+                                    elementId = api.dependent
+                                )
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            SendUiEvent.send(
+                                viewModelScope = viewModelScope,
+                                _uiEvent = _uiEvent,
+                                event = e.message ?: "An unknown error occurred. Please try again."
+                            )
+                        }
                     }
                 }
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
         _dependentOperatorMap.value = tempDependentOperatorMap

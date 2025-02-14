@@ -1,5 +1,7 @@
 package validation
 
+import kotlinx.serialization.json.Json
+import model.DropdownOption
 import model.parameters.ChildrenX
 import util.InputWrapper
 
@@ -11,37 +13,45 @@ fun hideAndShowValidation(
 ): Map<Int, Boolean> {
     val visibilityMap = mutableMapOf<Int, Boolean>()
 
-    // Helper function to check if a condition is satisfied
     fun isConditionSatisfied(condition: String, currentElementId: Int): Boolean {
-        val conditionResult = if ("=" in condition) {
-            val (left, right) = condition.split("=").map { it.trim().toIntOrNull() }
-            if (left != null && right != null) {
-                val elementValue = parameterValueMap[left]?.value.orEmpty()
-                val elementValues = elementValue.split(",").map { it.trim() }
-                val matchingOptionId = parameterMap[left]?.elementData?.options
-                    ?.firstOrNull { it.pValue.toString() in elementValues }?.optionId ?: 0
-                selectedOptionIds.contains(matchingOptionId) && matchingOptionId == right
-            } else {
-                false
+        val conditionResult = when {
+            "=" in condition -> {
+                val (leftStr, rightStr) = condition.split("=").map { it.trim() }
+                val leftId = leftStr.toIntOrNull()
+                val rightId = rightStr.toIntOrNull()
+
+                if (leftId != null && rightId != null) {
+                    val rawValue = parameterValueMap[leftId]?.value.orEmpty()
+                    val elementValue = if ("{" in rawValue) {
+                        Json.decodeFromString<DropdownOption>(rawValue).pValue.toString()
+                    } else {
+                        rawValue
+                    }
+
+                    val elementValues = elementValue.split(",").map { it.trim() }
+                    val matchingOptionId = parameterMap[leftId]?.elementData?.options
+                        ?.firstOrNull { it.pValue.toString() in elementValues }?.optionId ?: 0
+
+                    selectedOptionIds.contains(matchingOptionId) && matchingOptionId == rightId
+                } else {
+                    false
+                }
             }
-        } else {
-            condition.toIntOrNull()?.let { selectedOptionIds.contains(it) } ?: false
+
+            else -> condition.toIntOrNull()?.let { selectedOptionIds.contains(it) } ?: false
         }
 
-        if (conditionResult) {
-            val parentPValue = parameterMap[elementId]?.elementData?.options
-                ?.firstOrNull { selectedOptionIds.contains(it.optionId) }?.pValue ?: 0
+        if (!conditionResult) return false
 
-            val currentPValue = parameterMap[currentElementId]?.elementData?.options
-                ?.firstOrNull { selectedOptionIds.contains(it.optionId) }?.pValue ?: 0
+        val parentPValue = parameterMap[elementId]?.elementData?.options
+            ?.firstOrNull { selectedOptionIds.contains(it.optionId) }?.pValue ?: 0
 
-            return parentPValue == currentPValue
-        }
+        val currentPValue = parameterMap[currentElementId]?.elementData?.options
+            ?.firstOrNull { selectedOptionIds.contains(it.optionId) }?.pValue ?: 0
 
-        return false
+        return parentPValue == currentPValue
     }
 
-    // Recursive function to process dependencies
     fun processDependencies(currentId: Int, isVisible: Boolean) {
         parameterMap[currentId]?.elementOptionDependent?.forEach { (condition, dependentIds) ->
             val isConditionTrue = if ("|" in condition) {
@@ -62,7 +72,6 @@ fun hideAndShowValidation(
         }
     }
 
-    // Start processing from the root element
     processDependencies(elementId, true)
 
     return visibilityMap

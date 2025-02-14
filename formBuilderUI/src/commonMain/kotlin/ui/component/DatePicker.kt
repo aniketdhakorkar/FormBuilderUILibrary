@@ -47,6 +47,7 @@ import ui.helper.SupportingText
 import ui.helper.bringIntoView
 import ui.helper.getOutlinedTextFieldColors
 import util.InputWrapper
+import util.convertMillisToDate
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -180,8 +181,3 @@ fun CreateDatePicker(
     }
 }
 
-private fun convertMillisToDate(millis: Long): String {
-    val instant = Instant.fromEpochMilliseconds(millis)
-    val localDate = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
-    return "${localDate.dayOfMonth}/${localDate.monthNumber}/${localDate.year}"
-}
