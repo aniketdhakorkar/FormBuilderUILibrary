@@ -139,7 +139,10 @@ class FormScreenViewModel : ViewModel() {
                 visibilityMap.filterValues { !it }.forEach { (key, _) ->
                     _localParameterValueMap.value =
                         _localParameterValueMap.value.toMutableMap().apply {
-                            this[key] = InputWrapper(value = "", errorMessage = "")
+                            this[key] = InputWrapper(
+                                value = _localParameterMap.value[key]?.elementValue ?: "",
+                                errorMessage = ""
+                            )
                         }
                 }
 
@@ -509,7 +512,10 @@ class FormScreenViewModel : ViewModel() {
                 visibilityMap.filterValues { !it }.forEach { (key, _) ->
                     _localParameterValueMap.value =
                         _localParameterValueMap.value.toMutableMap().apply {
-                            this[key] = InputWrapper(value = "", errorMessage = "")
+                            this[key] = InputWrapper(
+                                value = _localParameterMap.value[key]?.elementValue ?: "",
+                                errorMessage = ""
+                            )
                         }
                 }
 
@@ -608,7 +614,10 @@ class FormScreenViewModel : ViewModel() {
                     tempVisibilityMap.filterValues { !it }.forEach { (key, _) ->
                         _localParameterValueMap.value =
                             _localParameterValueMap.value.toMutableMap().apply {
-                                this[key] = InputWrapper(value = "", errorMessage = "")
+                                this[key] = InputWrapper(
+                                    value = _localParameterMap.value[key]?.elementValue ?: "",
+                                    errorMessage = ""
+                                )
                             }
                     }
 
@@ -629,7 +638,7 @@ class FormScreenViewModel : ViewModel() {
                             tempDependentValueMap[key] = DependentValueCustomText(
                                 isShow = false,
                                 expression = value.dependant,
-                                value = ""
+                                value = _localParameterMap.value[key]?.elementValue ?: ""
                             )
                         }
                     }
