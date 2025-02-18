@@ -38,11 +38,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
+        /*val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
         val _parameterValueMap = MutableStateFlow<Map<Int, InputWrapper>>(mutableMapOf())
         val _parameterMap = MutableStateFlow<Map<Int, ChildrenX>>(mutableMapOf())
         val _visibilityMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
         val _enabledMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
+        val _singleEntryPValueMap = MutableStateFlow<Map<List<String>, String>>(mutableMapOf())
 
         val httpClient = provideHttpClient()
 
@@ -80,8 +81,8 @@ class MainActivity : ComponentActivity() {
                                 parameters {
                                     append("app_type", "1")
                                     append("project_id", "6")
-                                    append("program_id", "4")
-                                    append("category_id", "17")
+                                    append("program_id", "21")
+                                    append("category_id", "19")
                                 }
                             )
                         )
@@ -90,13 +91,14 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
+        }*/
         setContent {
 
-            val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
+           /* val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
             val parameterMap by _parameterMap.asStateFlow().collectAsState()
             val visibilityMap by _visibilityMap.asStateFlow().collectAsState()
             val enabledMap by _enabledMap.asStateFlow().collectAsState()
+            val singleEntryPValueMap by _singleEntryPValueMap.asStateFlow().collectAsState()
             val scope = rememberCoroutineScope()
 
             LaunchedEffect(key1 = true) {
@@ -110,7 +112,10 @@ class MainActivity : ComponentActivity() {
                                     if (childX.elementType != "ElementLabel")
                                         put(
                                             childX.elementId,
-                                            InputWrapper(value = if (childX.elementValue != null) (childX.elementValue ?: "") else "")
+                                            InputWrapper(
+                                                value = if (childX.elementValue != null) (childX.elementValue
+                                                    ?: "") else ""
+                                            )
                                         )
                                 }
 
@@ -128,6 +133,10 @@ class MainActivity : ComponentActivity() {
                             _enabledMap.value = _enabledMap.value.toMutableMap().apply {
                                 put(childX.elementId, true)
                             }
+                            _singleEntryPValueMap.value =
+                                _singleEntryPValueMap.value.toMutableMap().apply {
+                                    put(listOf("1221"), "Week already exist")
+                                }
                         }
                 }.launchIn(scope = scope)
             }
@@ -137,12 +146,13 @@ class MainActivity : ComponentActivity() {
                 parameterMap = parameterMap,
                 visibilityMap = visibilityMap,
                 enabledStatusMap = enabledMap,
-                httpClient = httpClient
-            )
+                httpClient = httpClient,
+                singleEntryPValueMap = singleEntryPValueMap
+            )*/
         }
     }
 
-    private fun provideHttpClient(): HttpClient = HttpClient {
+    /*private fun provideHttpClient(): HttpClient = HttpClient {
         install(HttpTimeout) {
             socketTimeoutMillis = 60_000
             requestTimeoutMillis = 60_000
@@ -169,11 +179,11 @@ class MainActivity : ComponentActivity() {
             bearer {
                 loadTokens {
                     BearerTokens(
-                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5NjE0OTM3LCJpYXQiOjE3Mzk2MTEzMzcsImp0aSI6IjUyMGQyMzMxZGQ1ODRlMjU4ODM2ZWFhN2YyZTQzMjdmIiwidXNlcl9pZCI6Mn0.wg5S6bF1jwy4-Mr8Fmg3gnyUjNO6r9cvEN3GSd_UUlQ",
+                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5Nzc2MTEyLCJpYXQiOjE3Mzk3NzI1MTIsImp0aSI6IjJlZWQzYTBhZmNlMTRmMjhiMTdkNWIxY2EzNzRmODhjIiwidXNlcl9pZCI6Mn0.sLrMcsX_DG48ohM2sCQj-gqntRWv0eJf1MZj36Wy_9Y",
                         refreshToken = null
                     )
                 }
             }
         }
-    }
+    }*/
 }

@@ -91,6 +91,8 @@ class FormScreenViewModel : ViewModel() {
     private val _dependentValueMap =
         MutableStateFlow<Map<Int, DependentValueCustomText>>(emptyMap())
     val dependentValueMap = _dependentValueMap.asStateFlow()
+    private val _singleEntryPValueMap = MutableStateFlow<Map<List<String>, String>>(emptyMap())
+    val singleEntryPValueMap = _singleEntryPValueMap.asStateFlow()
     private val _showProgressIndicator = MutableStateFlow(false)
     val showProgressIndicator = _showProgressIndicator.asStateFlow()
     private val _isSubmitButtonEnabled = MutableStateFlow(true)
@@ -351,52 +353,38 @@ class FormScreenViewModel : ViewModel() {
                     _showProgressIndicator.value = true
                     _isSubmitButtonEnabled.value = false
 
-                    val isFieldEmpty =
-                        _localParameterValueMap.value.isEmpty() || _localParameterValueMap.value.any { (key, inputWrapper) ->
-                            val elementType = _localParameterMap.value[key]?.elementType
+                    val isFieldEmpty = _localParameterValueMap.value.run {
+                        isEmpty() || any { (key, inputWrapper) ->
+                            val parameter = _localParameterMap.value[key]
                             val isVisible = _localVisibilityStatusMap.value[key] == true
-                            val isRequired = _localParameterMap.value[key]?.isRequired == "true"
-                            elementType != "ElementLabel" && isVisible && isRequired && inputWrapper.value.isEmpty()
-                        }
-
-                    val firstError =
-                        _localParameterValueMap.value.entries.firstOrNull { it.value.errorMessage.isNotBlank() }
-
-                    when {
-                        isFieldEmpty -> {
-                            SendUiEvent.send(
-                                viewModelScope = viewModelScope,
-                                _uiEvent = _uiEvent,
-                                event = "Field should not be empty"
-                            )
-                            _isSubmitButtonEnabled.value = true
-                        }
-
-                        firstError != null -> {
-                            SendUiEvent.send(
-                                viewModelScope = viewModelScope,
-                                _uiEvent = _uiEvent,
-                                event = firstError.value.errorMessage
-                            )
-                            _isSubmitButtonEnabled.value = true
-                        }
-
-                        else -> {
-                            event.onClick(
-                                _localParameterValueMap.value,
-                                _localVisibilityStatusMap.value
-                            )
+                            val isRequired = parameter?.isRequired == "true"
+                            parameter?.elementType != "ElementLabel" && isVisible && isRequired && inputWrapper.value.isEmpty()
                         }
                     }
 
-                    _showProgressIndicator.value = false
+                    _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
+                        _singleEntryPValueMap.value.forEach { (keyList, error) ->
+                            forEach { (key, inputWrapper) ->
+                                if (keyList.contains(inputWrapper.value)) {
+                                    SendUiEvent.send(viewModelScope, _uiEvent, error)
+                                    put(key, inputWrapper.copy(errorMessage = error, isFocus = true))
+                                }
+                            }
+                        }
+                    }
+
+                    val firstError = _localParameterValueMap.value.values.firstOrNull { it.errorMessage.isNotBlank() }
+
+                    when {
+                        isFieldEmpty -> SendUiEvent.send(viewModelScope, _uiEvent, "Field should not be empty")
+                        firstError != null -> SendUiEvent.send(viewModelScope, _uiEvent, firstError.errorMessage)
+                        else -> event.onClick(_localParameterValueMap.value, _localVisibilityStatusMap.value)
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    SendUiEvent.send(
-                        viewModelScope = viewModelScope,
-                        _uiEvent = _uiEvent,
-                        event = "An error occurred. try again."
-                    )
+                    SendUiEvent.send(viewModelScope, _uiEvent, "An error occurred. Try again.")
+                } finally {
+                    _showProgressIndicator.value = false
                     _isSubmitButtonEnabled.value = true
                 }
             }
@@ -547,6 +535,7 @@ class FormScreenViewModel : ViewModel() {
         parameterMap: Map<Int, ChildrenX>,
         visibilityMap: Map<Int, Boolean>,
         enabledStatusMap: Map<Int, Boolean>,
+        singleEntryPValueMap: Map<List<String>, String>,
         activity: String,
         form: String,
         action: String,
@@ -556,6 +545,7 @@ class FormScreenViewModel : ViewModel() {
         _localParameterMap.value = parameterMap
         _localVisibilityStatusMap.value = visibilityMap
         _localEnabledStatusMap.value = enabledStatusMap
+        _singleEntryPValueMap.value = singleEntryPValueMap
         _action = action
         _activity = activity
         _form = form
