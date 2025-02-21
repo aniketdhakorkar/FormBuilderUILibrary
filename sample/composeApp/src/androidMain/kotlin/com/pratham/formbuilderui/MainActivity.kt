@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
         val _parameterMap = MutableStateFlow<Map<Int, ChildrenX>>(mutableMapOf())
         val _visibilityMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
         val _enabledMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
-        val _singleEntryPValueMap = MutableStateFlow<Map<List<String>, String>>(mutableMapOf())
+        val _singleEntryPValueMap = MutableStateFlow<List<String>>(mutableListOf())
 
         val httpClient = provideHttpClient()
 
@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
         }*/
         setContent {
 
-           /* val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
+            /*val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
             val parameterMap by _parameterMap.asStateFlow().collectAsState()
             val visibilityMap by _visibilityMap.asStateFlow().collectAsState()
             val enabledMap by _enabledMap.asStateFlow().collectAsState()
@@ -134,8 +134,8 @@ class MainActivity : ComponentActivity() {
                                 put(childX.elementId, true)
                             }
                             _singleEntryPValueMap.value =
-                                _singleEntryPValueMap.value.toMutableMap().apply {
-                                    put(listOf("1221"), "Week already exist")
+                                _singleEntryPValueMap.value.toMutableList().apply {
+                                    add("1221")
                                 }
                         }
                 }.launchIn(scope = scope)
@@ -179,7 +179,7 @@ class MainActivity : ComponentActivity() {
             bearer {
                 loadTokens {
                     BearerTokens(
-                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5Nzc2MTEyLCJpYXQiOjE3Mzk3NzI1MTIsImp0aSI6IjJlZWQzYTBhZmNlMTRmMjhiMTdkNWIxY2EzNzRmODhjIiwidXNlcl9pZCI6Mn0.sLrMcsX_DG48ohM2sCQj-gqntRWv0eJf1MZj36Wy_9Y",
+                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5OTQ3NDU3LCJpYXQiOjE3Mzk5NDM4NTcsImp0aSI6ImJhYmIxY2VjZTNlMTRmOWI4YTgxNjdlZjVhZDJiZTZkIiwidXNlcl9pZCI6Mn0.oN_8zHcabrdL55o7ai53jHfUxJ59qRNHPjc0ybq5S1c",
                         refreshToken = null
                     )
                 }

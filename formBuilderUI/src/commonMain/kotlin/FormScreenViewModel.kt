@@ -91,8 +91,7 @@ class FormScreenViewModel : ViewModel() {
     private val _dependentValueMap =
         MutableStateFlow<Map<Int, DependentValueCustomText>>(emptyMap())
     val dependentValueMap = _dependentValueMap.asStateFlow()
-    private val _singleEntryPValueMap = MutableStateFlow<Map<List<String>, String>>(emptyMap())
-    val singleEntryPValueMap = _singleEntryPValueMap.asStateFlow()
+    private val _singleEntryPValueMap = MutableStateFlow<List<String>>(emptyList())
     private val _showProgressIndicator = MutableStateFlow(false)
     val showProgressIndicator = _showProgressIndicator.asStateFlow()
     private val _isSubmitButtonEnabled = MutableStateFlow(true)
@@ -362,23 +361,51 @@ class FormScreenViewModel : ViewModel() {
                         }
                     }
 
-                    _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
-                        _singleEntryPValueMap.value.forEach { (keyList, error) ->
-                            forEach { (key, inputWrapper) ->
-                                if (keyList.contains(inputWrapper.value)) {
-                                    SendUiEvent.send(viewModelScope, _uiEvent, error)
-                                    put(key, inputWrapper.copy(errorMessage = error, isFocus = true))
+                    if (_singleEntryPValueMap.value.isNotEmpty()) {
+                        val errorEntries = _singleEntryPValueMap.value.toSet()
+                        val existingValues = _localParameterValueMap.value.values.map { it.value }.toSet()
+
+                        if (errorEntries.all { it in existingValues }) {
+                            val updatedParameters = _localParameterValueMap.value.mapValues { (key, inputWrapper) ->
+                                if (errorEntries.contains(inputWrapper.value)) {
+                                    val parameterName =
+                                        _localParameterMap.value[key]?.elementLabel?.en ?: ""
+                                    val optionName =
+                                        _localParameterMap.value[key]?.elementData?.options?.firstOrNull { it.pValue.toString() == inputWrapper.value }?.optionName?.en
+                                            ?: ""
+                                    val errorMessage =
+                                        "Entry for $parameterName ($optionName) already exists. Please select a different $parameterName."
+                                    SendUiEvent.send(viewModelScope, _uiEvent, errorMessage)
+                                    inputWrapper.copy(errorMessage = errorMessage, isFocus = true)
+                                } else {
+                                    inputWrapper
                                 }
-                            }
+                            }.toMap()
+
+                            _localParameterValueMap.value = updatedParameters
                         }
                     }
 
-                    val firstError = _localParameterValueMap.value.values.firstOrNull { it.errorMessage.isNotBlank() }
+                    val firstError =
+                        _localParameterValueMap.value.values.firstOrNull { it.errorMessage.isNotBlank() }
 
                     when {
-                        isFieldEmpty -> SendUiEvent.send(viewModelScope, _uiEvent, "Field should not be empty")
-                        firstError != null -> SendUiEvent.send(viewModelScope, _uiEvent, firstError.errorMessage)
-                        else -> event.onClick(_localParameterValueMap.value, _localVisibilityStatusMap.value)
+                        isFieldEmpty -> SendUiEvent.send(
+                            viewModelScope,
+                            _uiEvent,
+                            "Field should not be empty"
+                        )
+
+                        firstError != null -> SendUiEvent.send(
+                            viewModelScope,
+                            _uiEvent,
+                            firstError.errorMessage
+                        )
+
+                        else -> event.onClick(
+                            _localParameterValueMap.value,
+                            _localVisibilityStatusMap.value
+                        )
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -535,7 +562,7 @@ class FormScreenViewModel : ViewModel() {
         parameterMap: Map<Int, ChildrenX>,
         visibilityMap: Map<Int, Boolean>,
         enabledStatusMap: Map<Int, Boolean>,
-        singleEntryPValueMap: Map<List<String>, String>,
+        singleEntryPValueMap: List<String>,
         activity: String,
         form: String,
         action: String,
