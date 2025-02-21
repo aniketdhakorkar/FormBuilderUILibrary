@@ -365,24 +365,37 @@ class FormScreenViewModel : ViewModel() {
                         val errorEntries = _singleEntryPValueMap.value.toSet()
                         val existingValues = _localParameterValueMap.value.values.map { it.value }.toSet()
 
+                        // Only trigger errors if all errorEntries exist in the current map
                         if (errorEntries.all { it in existingValues }) {
-                            val updatedParameters = _localParameterValueMap.value.mapValues { (key, inputWrapper) ->
-                                if (errorEntries.contains(inputWrapper.value)) {
-                                    val parameterName =
-                                        _localParameterMap.value[key]?.elementLabel?.en ?: ""
-                                    val optionName =
-                                        _localParameterMap.value[key]?.elementData?.options?.firstOrNull { it.pValue.toString() == inputWrapper.value }?.optionName?.en
-                                            ?: ""
-                                    val errorMessage =
-                                        "Entry for $parameterName ($optionName) already exists. Please select a different $parameterName."
-                                    SendUiEvent.send(viewModelScope, _uiEvent, errorMessage)
-                                    inputWrapper.copy(errorMessage = errorMessage, isFocus = true)
-                                } else {
-                                    inputWrapper
-                                }
-                            }.toMap()
+                            val conflictingParams = _localParameterValueMap.value.entries
+                                .filter { it.value.value in errorEntries }
+                                .mapNotNull { (key, inputWrapper) ->
+                                    val parameterName = _localParameterMap.value[key]?.elementLabel?.en ?: ""
+                                    val optionName = _localParameterMap.value[key]?.elementData?.options
+                                        ?.firstOrNull { it.pValue.toString() == inputWrapper.value }
+                                        ?.optionName?.en ?: ""
 
-                            _localParameterValueMap.value = updatedParameters
+                                    if (parameterName.isNotBlank()) "$parameterName ($optionName)" else null
+                                }
+
+                            if (conflictingParams.isNotEmpty()) {
+                                val joinedParams = conflictingParams.joinToString(", ")
+                                val joinedNames = conflictingParams.map { it.substringBefore(" (") }.joinToString(", ")
+
+                                val errorMessage = "The selected values for $joinedParams already exist. Please choose different values for $joinedNames."
+
+                                SendUiEvent.send(viewModelScope, _uiEvent, errorMessage)
+
+                                val updatedParameters = _localParameterValueMap.value.mapValues { (key, inputWrapper) ->
+                                    if (errorEntries.contains(inputWrapper.value)) {
+                                        inputWrapper.copy(errorMessage = errorMessage)
+                                    } else {
+                                        inputWrapper
+                                    }
+                                }.toMap()
+
+                                _localParameterValueMap.value = updatedParameters
+                            }
                         }
                     }
 
