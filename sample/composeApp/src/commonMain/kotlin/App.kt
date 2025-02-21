@@ -12,7 +12,7 @@ fun App(
     parameterMap: Map<Int, ChildrenX>,
     visibilityMap: Map<Int, Boolean>,
     enabledStatusMap: Map<Int, Boolean>,
-    singleEntryPValueMap: List<String>,
+    singleEntryPValueMap: Map<Int, List<String>>,
     httpClient: HttpClient
 ) {
     MaterialTheme {

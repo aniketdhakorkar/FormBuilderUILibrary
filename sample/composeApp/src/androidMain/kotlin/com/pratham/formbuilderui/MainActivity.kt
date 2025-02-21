@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
         val _parameterMap = MutableStateFlow<Map<Int, ChildrenX>>(mutableMapOf())
         val _visibilityMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
         val _enabledMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
-        val _singleEntryPValueMap = MutableStateFlow<List<String>>(mutableListOf())
+        val _singleEntryPValueMap = MutableStateFlow<Map<Int, List<String>>>(mutableMapOf())
 
         val httpClient = provideHttpClient()
 
@@ -134,8 +134,10 @@ class MainActivity : ComponentActivity() {
                                 put(childX.elementId, true)
                             }
                             _singleEntryPValueMap.value =
-                                _singleEntryPValueMap.value.toMutableList().apply {
-                                    add("1221")
+                                _singleEntryPValueMap.value.toMutableMap().apply {
+                                    put(2, listOf("1235", "1236"))
+                                    put(3, listOf("1115"))
+                                    put(4, listOf("1221"))
                                 }
                         }
                 }.launchIn(scope = scope)

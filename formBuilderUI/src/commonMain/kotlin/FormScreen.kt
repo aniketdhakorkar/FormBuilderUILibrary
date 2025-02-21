@@ -53,7 +53,7 @@ fun FormScreen(
     visibilityMap: Map<Int, Boolean>,
     onClick: (Map<Int, InputWrapper>, Map<Int, Boolean>) -> Unit,
     enabledStatusMap: Map<Int, Boolean>,
-    singleEntryPValueMap: List<String>,
+    singleEntryPValueMap: Map<Int, List<String>>,
     activity: String,
     form: String,
     action: String,
