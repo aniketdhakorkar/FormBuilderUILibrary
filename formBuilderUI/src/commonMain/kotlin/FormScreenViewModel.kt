@@ -121,6 +121,7 @@ class FormScreenViewModel : ViewModel() {
 
                             put(event.elementId, InputWrapper(value = newValue, errorMessage = ""))
                         }
+                    checkCombinationOfPValue()
                 } catch (e: Exception) {
                     e.printStackTrace()
                     SendUiEvent.send(
@@ -362,48 +363,7 @@ class FormScreenViewModel : ViewModel() {
                         }
                     }
 
-                    _combinationPValueList.value.let { map ->
-                        val elementIds = map.keys.firstOrNull() ?: return@let
-                        val validCombinations = map[elementIds]?.map { combination ->
-                            combination.split(", ").sorted().joinToString(", ")
-                        } ?: emptyList()
-
-                        val relevantKeys = elementIds.split(",").map { it.trim().toInt() }.toSet()
-
-                        val selectedValues = _localParameterValueMap.value
-                            .filterKeys { it in relevantKeys }
-                            .values
-                            .mapNotNull { it.value.takeIf { it.isNotBlank() } }
-                            .sorted()
-                            .joinToString(", ")
-
-                        if (selectedValues in validCombinations) {
-                            val conflictingParams = relevantKeys.mapNotNull { key ->
-                                val param = _localParameterMap.value[key]
-                                val parameterName = param?.elementLabel?.en.orEmpty()
-                                val optionName = param?.elementData?.options
-                                    ?.firstOrNull { it.pValue.toString() == _localParameterValueMap.value[key]?.value }
-                                    ?.optionName?.en.orEmpty()
-
-                                parameterName.takeIf { it.isNotBlank() }
-                                    ?.let { "$it ($optionName)" }
-                            }
-
-                            if (conflictingParams.isNotEmpty()) {
-                                val joinedParams = conflictingParams.joinToString(", ")
-                                val joinedNames = conflictingParams.joinToString(", ") { it.substringBefore(" (") }
-                                val errorMessage =
-                                    "The selected values for $joinedParams already exist. Please choose different values for $joinedNames."
-
-                                SendUiEvent.send(viewModelScope, _uiEvent, errorMessage)
-
-                                _localParameterValueMap.value =
-                                    _localParameterValueMap.value.mapValues { (key, wrapper) ->
-                                        if (key in relevantKeys) wrapper.copy(errorMessage = errorMessage) else wrapper
-                                    }
-                            }
-                        }
-                    }
+                    checkCombinationOfPValue()
 
                     val firstError =
                         _localParameterValueMap.value.values.firstOrNull { it.errorMessage.isNotBlank() }
@@ -724,6 +684,57 @@ class FormScreenViewModel : ViewModel() {
 
         _dependentOperatorMap.value = tempDependentOperatorMap
         _dependentValueMap.value = tempDependentValueMap
+    }
+
+    private fun checkCombinationOfPValue() {
+        _combinationPValueList.value.let { map ->
+            val elementIds = map.keys.firstOrNull() ?: return@let
+            val validCombinations = map[elementIds]?.map { combination ->
+                combination.split(", ").sorted().joinToString(", ")
+            } ?: emptyList()
+
+            val relevantKeys = elementIds.split(",").map { it.trim().toInt() }.toSet()
+
+            val selectedValues = _localParameterValueMap.value
+                .filterKeys { it in relevantKeys }
+                .values
+                .mapNotNull { it.value.takeIf { it.isNotBlank() } }
+                .sorted()
+                .joinToString(", ")
+
+            if (selectedValues in validCombinations) {
+                val conflictingParams = relevantKeys.mapNotNull { key ->
+                    val param = _localParameterMap.value[key]
+                    val parameterName = param?.elementLabel?.en.orEmpty()
+                    val optionName = param?.elementData?.options
+                        ?.firstOrNull { it.pValue.toString() == _localParameterValueMap.value[key]?.value }
+                        ?.optionName?.en.orEmpty()
+
+                    parameterName.takeIf { it.isNotBlank() }
+                        ?.let { "$it ($optionName)" }
+                }
+
+                if (conflictingParams.isNotEmpty()) {
+                    val joinedParams = conflictingParams.joinToString(", ")
+                    val joinedNames =
+                        conflictingParams.joinToString(", ") { it.substringBefore(" (") }
+                    val errorMessage =
+                        "The selected values for $joinedParams already exist. Please choose different values for $joinedNames."
+
+                    SendUiEvent.send(viewModelScope, _uiEvent, errorMessage)
+
+                    _localParameterValueMap.value =
+                        _localParameterValueMap.value.mapValues { (key, wrapper) ->
+                            if (key in relevantKeys) wrapper.copy(errorMessage = errorMessage) else wrapper
+                        }
+                }
+            } else {
+                _localParameterValueMap.value =
+                    _localParameterValueMap.value.mapValues { (key, wrapper) ->
+                        if (key in relevantKeys) wrapper.copy(errorMessage = "") else wrapper
+                    }
+            }
+        }
     }
 
     private fun updateImageList(elementId: Int, images: List<ImageModel>) {
