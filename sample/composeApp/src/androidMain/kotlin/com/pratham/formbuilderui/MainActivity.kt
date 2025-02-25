@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity() {
         val _parameterMap = MutableStateFlow<Map<Int, ChildrenX>>(mutableMapOf())
         val _visibilityMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
         val _enabledMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
-        val _singleEntryPValueMap = MutableStateFlow<Map<Int, List<String>>>(mutableMapOf())
+        val _combinationPValueList = MutableStateFlow<Map<String, List<String>>>(mutableMapOf())
 
         val httpClient = provideHttpClient()
 
@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
             val parameterMap by _parameterMap.asStateFlow().collectAsState()
             val visibilityMap by _visibilityMap.asStateFlow().collectAsState()
             val enabledMap by _enabledMap.asStateFlow().collectAsState()
-            val singleEntryPValueMap by _singleEntryPValueMap.asStateFlow().collectAsState()
+            val combinationPValueList by _combinationPValueList.asStateFlow().collectAsState()
             val scope = rememberCoroutineScope()
 
             LaunchedEffect(key1 = true) {
@@ -133,11 +133,20 @@ class MainActivity : ComponentActivity() {
                             _enabledMap.value = _enabledMap.value.toMutableMap().apply {
                                 put(childX.elementId, true)
                             }
-                            _singleEntryPValueMap.value =
-                                _singleEntryPValueMap.value.toMutableMap().apply {
-                                    put(2, listOf("1235", "1236"))
-                                    put(3, listOf("1115"))
-                                    put(4, listOf("1221"))
+                            _combinationPValueList.value =
+                                _combinationPValueList.value.toMutableMap().apply {
+                                    clear()
+                                    put(
+                                        "2,3,4",
+                                        listOf(
+                                            "1235, 1126, 1221",
+                                            "1235, 1125, 1225",
+                                            "1235, 1125, 1224",
+                                            "1235, 1125, 1223",
+                                            "1235, 1125, 1222",
+                                            "1235, 1125, 1221"
+                                        )
+                                    )
                                 }
                         }
                 }.launchIn(scope = scope)
@@ -149,7 +158,7 @@ class MainActivity : ComponentActivity() {
                 visibilityMap = visibilityMap,
                 enabledStatusMap = enabledMap,
                 httpClient = httpClient,
-                singleEntryPValueMap = singleEntryPValueMap
+                combinationPValueList = combinationPValueList
             )*/
         }
     }

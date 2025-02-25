@@ -12,7 +12,7 @@ fun App(
     parameterMap: Map<Int, ChildrenX>,
     visibilityMap: Map<Int, Boolean>,
     enabledStatusMap: Map<Int, Boolean>,
-    singleEntryPValueMap: Map<Int, List<String>>,
+    combinationPValueList: Map<String, List<String>>,
     httpClient: HttpClient
 ) {
     MaterialTheme {
@@ -21,7 +21,7 @@ fun App(
             parameterMap = parameterMap,
             visibilityMap = visibilityMap,
             enabledStatusMap = enabledStatusMap,
-            singleEntryPValueMap = singleEntryPValueMap,
+            combinationPValueList = combinationPValueList,
             onClick = { _, _ -> },
             action = "add",
             activity = "10",

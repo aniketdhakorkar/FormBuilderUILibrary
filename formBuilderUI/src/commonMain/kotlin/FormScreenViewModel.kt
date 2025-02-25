@@ -91,7 +91,7 @@ class FormScreenViewModel : ViewModel() {
     private val _dependentValueMap =
         MutableStateFlow<Map<Int, DependentValueCustomText>>(emptyMap())
     val dependentValueMap = _dependentValueMap.asStateFlow()
-    private val _singleEntryPValueMap = MutableStateFlow<Map<Int, List<String>>>(emptyMap())
+    private val _combinationPValueList = MutableStateFlow<Map<String, List<String>>>(emptyMap())
     private val _showProgressIndicator = MutableStateFlow(false)
     val showProgressIndicator = _showProgressIndicator.asStateFlow()
     private val _isSubmitButtonEnabled = MutableStateFlow(true)
@@ -120,17 +120,6 @@ class FormScreenViewModel : ViewModel() {
                             }
 
                             put(event.elementId, InputWrapper(value = newValue, errorMessage = ""))
-
-                            _singleEntryPValueMap.value[event.elementId]?.let { idList ->
-                                if (newValue !in idList) {
-                                    _singleEntryPValueMap.value.keys.filter { it != event.elementId }
-                                        .forEach { key ->
-                                            this[key] = _localParameterValueMap.value[key]?.copy(
-                                                errorMessage = ""
-                                            ) ?: InputWrapper(value = "")
-                                        }
-                                }
-                            }
                         }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -373,15 +362,23 @@ class FormScreenViewModel : ViewModel() {
                         }
                     }
 
-                    if (_singleEntryPValueMap.value.isNotEmpty()) {
-                        val commonKeys = _localParameterValueMap.value.keys.filter { it in _singleEntryPValueMap.value }
+                    _combinationPValueList.value.let { map ->
+                        val elementIds = map.keys.firstOrNull() ?: return@let
+                        val validCombinations = map[elementIds]?.map { combination ->
+                            combination.split(", ").sorted().joinToString(", ")
+                        } ?: emptyList()
 
-                        val allKeysMatch = commonKeys.all { key ->
-                            _singleEntryPValueMap.value[key]?.contains(_localParameterValueMap.value[key]?.value) == true
-                        }
+                        val relevantKeys = elementIds.split(",").map { it.trim().toInt() }.toSet()
 
-                        if (allKeysMatch && commonKeys.isNotEmpty()) { // 🔥 Error only if all match
-                            val conflictingParams = commonKeys.mapNotNull { key ->
+                        val selectedValues = _localParameterValueMap.value
+                            .filterKeys { it in relevantKeys }
+                            .values
+                            .mapNotNull { it.value.takeIf { it.isNotBlank() } }
+                            .sorted()
+                            .joinToString(", ")
+
+                        if (selectedValues in validCombinations) {
+                            val conflictingParams = relevantKeys.mapNotNull { key ->
                                 val param = _localParameterMap.value[key]
                                 val parameterName = param?.elementLabel?.en.orEmpty()
                                 val optionName = param?.elementData?.options
@@ -394,17 +391,15 @@ class FormScreenViewModel : ViewModel() {
 
                             if (conflictingParams.isNotEmpty()) {
                                 val joinedParams = conflictingParams.joinToString(", ")
-                                val joinedNames =
-                                    conflictingParams.joinToString(", ") { it.substringBefore(" (") }
+                                val joinedNames = conflictingParams.joinToString(", ") { it.substringBefore(" (") }
                                 val errorMessage =
                                     "The selected values for $joinedParams already exist. Please choose different values for $joinedNames."
 
                                 SendUiEvent.send(viewModelScope, _uiEvent, errorMessage)
 
-                                // Update only relevant fields
                                 _localParameterValueMap.value =
                                     _localParameterValueMap.value.mapValues { (key, wrapper) ->
-                                        if (key in commonKeys) wrapper.copy(errorMessage = errorMessage) else wrapper
+                                        if (key in relevantKeys) wrapper.copy(errorMessage = errorMessage) else wrapper
                                     }
                             }
                         }
@@ -586,7 +581,7 @@ class FormScreenViewModel : ViewModel() {
         parameterMap: Map<Int, ChildrenX>,
         visibilityMap: Map<Int, Boolean>,
         enabledStatusMap: Map<Int, Boolean>,
-        singleEntryPValueMap: Map<Int, List<String>>,
+        combinationPValueList: Map<String, List<String>>,
         activity: String,
         form: String,
         action: String,
@@ -596,7 +591,7 @@ class FormScreenViewModel : ViewModel() {
         _localParameterMap.value = parameterMap
         _localVisibilityStatusMap.value = visibilityMap
         _localEnabledStatusMap.value = enabledStatusMap
-        _singleEntryPValueMap.value = singleEntryPValueMap
+        _combinationPValueList.value = combinationPValueList
         _action = action
         _activity = activity
         _form = form
