@@ -190,7 +190,7 @@ class MainActivity : ComponentActivity() {
             bearer {
                 loadTokens {
                     BearerTokens(
-                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM5OTQ3NDU3LCJpYXQiOjE3Mzk5NDM4NTcsImp0aSI6ImJhYmIxY2VjZTNlMTRmOWI4YTgxNjdlZjVhZDJiZTZkIiwidXNlcl9pZCI6Mn0.oN_8zHcabrdL55o7ai53jHfUxJ59qRNHPjc0ybq5S1c",
+                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQwNTE0NDQxLCJpYXQiOjE3NDA1MTA4NDEsImp0aSI6ImJiOTVjODI3NjY0NDQ4MDFhZWQ0YjBjODdkZjcxYTQ3IiwidXNlcl9pZCI6Mn0.f4Pumz5AsokMF6WIbENZb1SrxOSouwGbfV-MVNZcm9M",
                         refreshToken = null
                     )
                 }

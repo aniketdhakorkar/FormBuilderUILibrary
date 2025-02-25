@@ -121,7 +121,9 @@ class FormScreenViewModel : ViewModel() {
 
                             put(event.elementId, InputWrapper(value = newValue, errorMessage = ""))
                         }
-                    checkCombinationOfPValue()
+
+                    if (_action != "filter")
+                        checkCombinationOfPValue()
                 } catch (e: Exception) {
                     e.printStackTrace()
                     SendUiEvent.send(
@@ -363,7 +365,8 @@ class FormScreenViewModel : ViewModel() {
                         }
                     }
 
-                    checkCombinationOfPValue()
+                    if (_action != "filter")
+                        checkCombinationOfPValue()
 
                     val firstError =
                         _localParameterValueMap.value.values.firstOrNull { it.errorMessage.isNotBlank() }
