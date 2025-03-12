@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
@@ -8,18 +6,11 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinx.serialization)
-    id("com.vanniktech.maven.publish") version "0.30.0"
+    id("com.vanniktech.maven.publish") version "0.31.0"
 }
 
 kotlin {
-    androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
-
-        publishLibraryVariants("release","debug")
-    }
+    androidTarget()
 
     //jvm("desktop")
 
@@ -31,6 +22,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "FormBuilderUI"
             isStatic = true
+            binaryOption("bundleId", "com.pratham.formbuilderui")
         }
     }
 
@@ -108,8 +100,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_23
+        targetCompatibility = JavaVersion.VERSION_23
     }
     buildFeatures {
         compose = true
