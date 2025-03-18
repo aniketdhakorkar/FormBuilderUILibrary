@@ -81,8 +81,8 @@ class MainActivity : ComponentActivity() {
                                 parameters {
                                     append("app_type", "1")
                                     append("project_id", "6")
-                                    append("program_id", "21")
-                                    append("category_id", "19")
+                                    append("program_id", "22")
+                                    append("category_id", "22")
                                 }
                             )
                         )
@@ -137,14 +137,12 @@ class MainActivity : ComponentActivity() {
                                 _combinationPValueList.value.toMutableMap().apply {
                                     clear()
                                     put(
-                                        "2,3,4",
+                                        "1",
                                         listOf(
-                                            "1235, 1126, 1221",
-                                            "1235, 1125, 1225",
-                                            "1235, 1125, 1224",
-                                            "1235, 1125, 1223",
-                                            "1235, 1125, 1222",
-                                            "1235, 1125, 1221"
+                                            "1240",
+                                            "1240",
+                                            "1240",
+                                            "1240"
                                         )
                                     )
                                 }

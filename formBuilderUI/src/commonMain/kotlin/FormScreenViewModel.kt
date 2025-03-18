@@ -122,7 +122,7 @@ class FormScreenViewModel : ViewModel() {
                             put(event.elementId, InputWrapper(value = newValue, errorMessage = ""))
                         }
 
-                    if (_action != "filter")
+                    if (_action != "filter" && _combinationPValueList.value.keys.contains(event.elementId.toString()))
                         checkCombinationOfPValue()
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -605,9 +605,10 @@ class FormScreenViewModel : ViewModel() {
                         elementId = element.elementId,
                         parameterMap = _localParameterMap.value,
                         parameterValueMap = _localParameterValueMap.value,
-                        selectedOptionIds = listOf((element.elementData.options
-                            .firstOrNull { it.pValue == tempPValue }
-                            ?.optionId) ?: 0)
+                        selectedOptionIds = listOf(
+                            (element.elementData.options
+                                .firstOrNull { it.pValue == tempPValue }
+                                ?.optionId) ?: 0)
                     )
 
                     tempVisibilityMap.filterValues { !it }.forEach { (key, _) ->
