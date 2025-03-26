@@ -65,5 +65,5 @@ data class ChildrenX(
     @SerialName("elementOptionDependent")
     val elementOptionDependent: Map<String, String>?,
     @SerialName("is_autofill")
-    val isAutofill: AutofillItem? = null
+    val isAutofill: AutofillItem? = null,
 )

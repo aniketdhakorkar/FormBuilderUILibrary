@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
+        /*val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
         val _parameterValueMap = MutableStateFlow<Map<Int, InputWrapper>>(mutableMapOf())
         val _parameterMap = MutableStateFlow<Map<Int, ChildrenX>>(mutableMapOf())
         val _visibilityMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
                                     append("app_type", "1")
                                     append("project_id", "6")
                                     append("program_id", "31")
-                                    append("category_id", "34")
+                                    append("category_id", "1")
                                 }
                             )
                         )
@@ -91,10 +91,10 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
+        }*/
         setContent {
 
-            val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
+            /*val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
             val parameterMap by _parameterMap.asStateFlow().collectAsState()
             val visibilityMap by _visibilityMap.asStateFlow().collectAsState()
             val enabledMap by _enabledMap.asStateFlow().collectAsState()
@@ -157,11 +157,11 @@ class MainActivity : ComponentActivity() {
                 enabledStatusMap = enabledMap,
                 httpClient = httpClient,
                 combinationPValueList = combinationPValueList
-            )
+            )*/
         }
     }
 
-    private fun provideHttpClient(): HttpClient = HttpClient {
+    /*private fun provideHttpClient(): HttpClient = HttpClient {
         install(HttpTimeout) {
             socketTimeoutMillis = 60_000
             requestTimeoutMillis = 60_000
@@ -194,5 +194,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
+    }*/
 }

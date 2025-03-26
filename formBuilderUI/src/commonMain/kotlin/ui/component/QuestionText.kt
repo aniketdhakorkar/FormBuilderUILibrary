@@ -29,12 +29,14 @@ fun GenerateText(
     parameterDescription: String
 ) {
 
+    val backgroundColor: Color =
+        if (style?.backgroundColor == null) Color.Transparent else parseColor(style.backgroundColor)
     val fontStyle =
         if ((style?.textStyle ?: "").contains("italic")) FontStyle.Italic else FontStyle.Normal
     val fontWeight =
         if ((style?.textStyle ?: "").contains("bold")) FontWeight.Bold else FontWeight.Normal
     val fontColor =
-        if (style == null) MaterialTheme.colorScheme.onBackground else parseColor(style.fontColor)
+        if (style?.fontColor == null) MaterialTheme.colorScheme.onBackground else parseColor(style.fontColor)
 
     Column(
         modifier = Modifier
@@ -46,10 +48,7 @@ fun GenerateText(
         Text(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    color = if (style == null) Color.Transparent
-                    else parseColor(style.backgroundColor)
-                ),
+                .background(color = backgroundColor),
             text = buildAnnotatedString {
                 append(question)
                 if (isMandatory == "true")

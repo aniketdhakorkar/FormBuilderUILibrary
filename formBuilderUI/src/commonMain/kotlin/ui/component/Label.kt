@@ -13,7 +13,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import model.parameters.ElementLabel
 import model.parameters.Style
 import model.parameters.parseColor
 
@@ -26,13 +25,13 @@ fun CreateLabel(
     if (!isVisible) return
 
     val backgroundColor: Color =
-        if (style == null) Color.Transparent else parseColor(style.backgroundColor)
+        if (style?.backgroundColor == null) Color.Transparent else parseColor(style.backgroundColor)
     val fontStyle =
         if ((style?.textStyle ?: "").contains("italic")) FontStyle.Italic else FontStyle.Normal
     val fontWeight =
         if ((style?.textStyle ?: "").contains("bold")) FontWeight.Bold else FontWeight.Normal
     val fontColor =
-        if (style == null) MaterialTheme.colorScheme.onBackground else parseColor(style.fontColor)
+        if (style?.fontColor == null) MaterialTheme.colorScheme.onBackground else parseColor(style.fontColor)
 
     Column(modifier = Modifier.padding(0.dp, 8.dp, 0.dp, 8.dp)) {
         Text(

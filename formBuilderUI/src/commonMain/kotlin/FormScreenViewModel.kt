@@ -471,6 +471,13 @@ class FormScreenViewModel : ViewModel() {
 
             is FormScreenEvent.OnCheckboxValueChanged -> {
 
+                if (event.option.prompts != null && event.option.isChecked) {
+                    SendUiEvent.send(
+                        viewModelScope = viewModelScope,
+                        _uiEvent = _uiEvent,
+                        event = event.option.prompts
+                    )
+                }
                 val tempList = _localParameterValueMap.value[event.elementId]?.value
                     ?.takeIf { it.isNotEmpty() }
                     ?.split(",")
