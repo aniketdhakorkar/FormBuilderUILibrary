@@ -17,5 +17,9 @@ data class Options(
     val prompts: String? = null
 )
 
-fun Options.toDropdown() =
-    DropdownOption(optionId = optionId, pValue = pValue, optionName = optionName.en ?: "", prompts = prompts)
+fun Options.toDropdown() = DropdownOption(
+    optionId = optionId,
+    pValue = pValue,
+    optionName = optionName.en ?: "",
+    prompts = prompts
+)

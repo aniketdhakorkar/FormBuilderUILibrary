@@ -1,7 +1,6 @@
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -122,7 +121,7 @@ fun FormScreen(
             ) {
                 LazyColumn(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
                         .weight(1f)
                 ) {
                     items(localParameterMap.toList()) { parameter ->
@@ -221,8 +220,8 @@ fun FormScreen(
                                 CreateCamera(
                                     question = question,
                                     description = description,
-                                    isMandatory = isMandatory,
                                     style = style,
+                                    isMandatory = isMandatory,
                                     imageList = imageList[elementId] ?: emptyList(),
                                     action = action,
                                     isViewCamera = isViewCamera,

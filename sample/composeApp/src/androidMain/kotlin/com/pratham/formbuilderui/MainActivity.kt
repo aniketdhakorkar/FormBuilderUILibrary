@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        /*val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
+        val _parameters = MutableStateFlow<List<Parameters>>(emptyList())
         val _parameterValueMap = MutableStateFlow<Map<Int, InputWrapper>>(mutableMapOf())
         val _parameterMap = MutableStateFlow<Map<Int, ChildrenX>>(mutableMapOf())
         val _visibilityMap = MutableStateFlow<Map<Int, Boolean>>(mutableMapOf())
@@ -81,8 +81,8 @@ class MainActivity : ComponentActivity() {
                                 parameters {
                                     append("app_type", "1")
                                     append("project_id", "6")
-                                    append("program_id", "31")
-                                    append("category_id", "1")
+                                    append("program_id", "10")
+                                    append("category_id", "3")
                                 }
                             )
                         )
@@ -91,10 +91,10 @@ class MainActivity : ComponentActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }*/
+        }
         setContent {
 
-            /*val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
+            val parameterValueMap by _parameterValueMap.asStateFlow().collectAsState()
             val parameterMap by _parameterMap.asStateFlow().collectAsState()
             val visibilityMap by _visibilityMap.asStateFlow().collectAsState()
             val enabledMap by _enabledMap.asStateFlow().collectAsState()
@@ -157,11 +157,11 @@ class MainActivity : ComponentActivity() {
                 enabledStatusMap = enabledMap,
                 httpClient = httpClient,
                 combinationPValueList = combinationPValueList
-            )*/
+            )
         }
     }
 
-    /*private fun provideHttpClient(): HttpClient = HttpClient {
+    private fun provideHttpClient(): HttpClient = HttpClient {
         install(HttpTimeout) {
             socketTimeoutMillis = 60_000
             requestTimeoutMillis = 60_000
@@ -188,11 +188,11 @@ class MainActivity : ComponentActivity() {
             bearer {
                 loadTokens {
                     BearerTokens(
-                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQwNTE0NDQxLCJpYXQiOjE3NDA1MTA4NDEsImp0aSI6ImJiOTVjODI3NjY0NDQ4MDFhZWQ0YjBjODdkZjcxYTQ3IiwidXNlcl9pZCI6Mn0.f4Pumz5AsokMF6WIbENZb1SrxOSouwGbfV-MVNZcm9M",
+                        accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0MTg2ODQ1LCJpYXQiOjE3NDQxODMyNDUsImp0aSI6ImUwOGRlYWMzMjJmMTQxOGI4NTQ0MmU0ZTBkMzFkNWQ1IiwidXNlcl9pZCI6Mn0.Lj046t3dK6raIisAj8aIWGGyMeQCPtTs8SKG3qzOyCo",
                         refreshToken = null
                     )
                 }
             }
         }
-    }*/
+    }
 }

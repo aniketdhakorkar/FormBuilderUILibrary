@@ -12,7 +12,7 @@ plugins {
 kotlin {
     androidTarget()
 
-    //jvm("desktop")
+    jvm("desktop")
 
     listOf(
         iosX64(),
@@ -27,17 +27,13 @@ kotlin {
     }
 
     sourceSets {
+        val desktopMain by getting
 
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.kotlinx.coroutines.android)
-            implementation(libs.camera.core)
-            implementation(libs.camera.camera2)
-            implementation(libs.androidx.camera.view)
-            implementation(libs.camera.lifecycle)
-            implementation(libs.camera.extensions)
             implementation(libs.androidx.startup.runtime)
         }
         commonMain.dependencies {
@@ -71,9 +67,17 @@ kotlin {
             implementation(libs.coil3)
             implementation(libs.coil3.ktor)
             implementation(libs.coil3.compose)
+
+            //camera
+            implementation(libs.camera)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+        }
+
+        desktopMain.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(libs.ktor.client.java)
         }
     }
 }
@@ -115,7 +119,7 @@ mavenPublishing {
     coordinates(
         groupId = "io.github.aniketdhakorkar",
         artifactId = "form-builder-ui",
-        version = "1.0.0-beta-99"
+        version = "1.0.0-beta-100"
     )
 
     // Configure POM metadata for the published artifact
