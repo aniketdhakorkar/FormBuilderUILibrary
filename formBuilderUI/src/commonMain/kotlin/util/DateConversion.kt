@@ -23,5 +23,5 @@ fun convertDateToMillis(dateString: String): Long {
 fun convertMillisToDate(millis: Long): String {
     val instant = Instant.fromEpochMilliseconds(millis)
     val localDate = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
-    return "${localDate.year}-${localDate.monthNumber}-${localDate.dayOfMonth}"
+    return localDate.toString()
 }
