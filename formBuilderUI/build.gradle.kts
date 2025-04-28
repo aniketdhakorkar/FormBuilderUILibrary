@@ -119,7 +119,7 @@ mavenPublishing {
     coordinates(
         groupId = "io.github.aniketdhakorkar",
         artifactId = "form-builder-ui",
-        version = "1.0.0-beta-100"
+        version = "1.0.0-beta-102"
     )
 
     // Configure POM metadata for the published artifact
