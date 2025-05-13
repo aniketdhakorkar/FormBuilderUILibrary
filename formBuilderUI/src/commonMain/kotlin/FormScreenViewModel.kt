@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.io.IOException
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import model.filter.FilterResponseDto
 import model.DependentValueCustomText
@@ -89,7 +88,6 @@ class FormScreenViewModel : ViewModel() {
     private val _localEnabledStatusMap = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
     val localEnabledStatusMap = _localEnabledStatusMap.asStateFlow()
     private val _dependentOperatorMap = MutableStateFlow<Map<List<Int>, List<Int>>>(emptyMap())
-    private val dependentOperatorMap = _dependentOperatorMap.asStateFlow()
     private val _dependentValueMap =
         MutableStateFlow<Map<Int, DependentValueCustomText>>(emptyMap())
     val dependentValueMap = _dependentValueMap.asStateFlow()
@@ -211,7 +209,7 @@ class FormScreenViewModel : ViewModel() {
                     val remainingValue =
                         calculateRemainingValuesForFocusChange(
                             elementId = event.elementId,
-                            dependentOperatorMap = dependentOperatorMap.value,
+                            dependentOperatorMap = _dependentOperatorMap.value,
                             localParameterValueMap = localParameterValueMap.value
                         )
 
@@ -263,7 +261,7 @@ class FormScreenViewModel : ViewModel() {
                             val (remainingValue, parentValue, childValue, expression, dependentValue) = calculateRemainingValuesForValueChange(
                                 elementId = event.elementId,
                                 newValue = event.value,
-                                dependentOperatorMap = dependentOperatorMap.value,
+                                dependentOperatorMap = _dependentOperatorMap.value,
                                 dependentValueMap = dependentValueMap.value,
                                 localParameterValueMap = localParameterValueMap.value
                             )
@@ -766,7 +764,7 @@ class FormScreenViewModel : ViewModel() {
             val selectedValues = _localParameterValueMap.value
                 .filterKeys { it in relevantKeys }
                 .values
-                .mapNotNull { it.value.takeIf { it.isNotBlank() } }
+                .mapNotNull { it.value.takeIf {it1 -> it1.isNotBlank() } }
                 .sorted()
                 .joinToString(", ")
 
