@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ChildrenX(
     @SerialName("autocalculate")
-    val autoCalculate: List<String>,
+    val autoCalculate: List<AutoCalculate>,
     @SerialName("database_param")
     val databaseParam: String,
     @SerialName("dependant")

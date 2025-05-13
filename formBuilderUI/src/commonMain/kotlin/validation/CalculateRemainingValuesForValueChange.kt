@@ -17,24 +17,38 @@ fun calculateRemainingValuesForValueChange(
     var expression = ""
     var dependentValue = ""
 
-    dependentOperatorMap.forEach { (key, value) ->
-        if (key.contains(elementId)) {
-            value.forEach {
-                parentValue += (localParameterValueMap[it]?.value
-                    ?: "0").toIntOrNull() ?: 0
-            }
-            key.forEach {
-                childValue += if (it == elementId) (newValue.toIntOrNull()
-                    ?: 0) else (localParameterValueMap[it]?.value
-                    ?: "0").toIntOrNull() ?: 0
-                if (it == elementId) {
-                    expression = dependentValueMap[it]?.expression ?: ""
-                    dependentValue = dependentValueMap[it]?.value ?: ""
+    for ((childIds, parentIds) in dependentOperatorMap) {
+        if (!childIds.contains(elementId)) continue
+
+        parentValue = parentIds.sumOf { id ->
+            localParameterValueMap[id]?.value?.toIntOrNull() ?: 0
+        }
+
+        childValue = 0
+        for (childId in childIds) {
+            val valueStr = if (childId == elementId) newValue else localParameterValueMap[childId]?.value.orEmpty()
+            val valueInt = valueStr.toIntOrNull() ?: 0
+            childValue += valueInt
+
+            if (childId == elementId) {
+                expression = dependentValueMap[childId]?.expression.orEmpty()
+                dependentValue = dependentValueMap[childId]?.value.orEmpty()
+            } else {
+                if (expression == "equal" && localParameterValueMap[childId]?.value?.isBlank() == true) {
+                    return Quadruple(
+                        remainingValue = 0,
+                        parentValue = parentValue,
+                        childValue = childValue,
+                        expression = expression,
+                        dependentValue = dependentValue
+                    )
                 }
             }
-            remainingValue = parentValue - childValue
         }
+
+        remainingValue = parentValue - childValue
     }
+
     return Quadruple(
         remainingValue = remainingValue,
         parentValue = parentValue,

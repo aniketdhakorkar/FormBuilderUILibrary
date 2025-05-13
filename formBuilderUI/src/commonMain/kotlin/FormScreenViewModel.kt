@@ -1,5 +1,6 @@
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.FormDataContent
@@ -39,6 +40,7 @@ import model.image.SaveImageResponseDto
 import model.parameters.toDropdown
 import validation.calculateRemainingValuesForFocusChange
 import validation.calculateRemainingValuesForValueChange
+import validation.calculateSumForElement
 import validation.checkMobileNoValidation
 import validation.expressionValidation
 import validation.hideAndShowValidation
@@ -91,6 +93,9 @@ class FormScreenViewModel : ViewModel() {
     private val _dependentValueMap =
         MutableStateFlow<Map<Int, DependentValueCustomText>>(emptyMap())
     val dependentValueMap = _dependentValueMap.asStateFlow()
+    private val _operatorMap = MutableStateFlow<Map<List<Int>, List<Int>>>(emptyMap())
+    private val _operatorValueMap =
+        MutableStateFlow<Map<Int, DependentValueCustomText>>(emptyMap())
     private val _combinationPValueList = MutableStateFlow<Map<String, List<String>>>(emptyMap())
     private val _showProgressIndicator = MutableStateFlow(false)
     val showProgressIndicator = _showProgressIndicator.asStateFlow()
@@ -282,8 +287,8 @@ class FormScreenViewModel : ViewModel() {
                                         put(
                                             event.elementId,
                                             InputWrapper(
-                                                value = localParameterValueMap.value[event.elementId]?.value
-                                                    ?: "",
+                                                value = if (event.value.isNotBlank()) localParameterValueMap.value[event.elementId]?.value
+                                                    ?: "" else "",
                                                 errorMessage = errorMessage,
                                                 isFocus = true
                                             )
@@ -300,6 +305,33 @@ class FormScreenViewModel : ViewModel() {
                                         InputWrapper(value = event.value, errorMessage = "")
                                     )
                                 }
+
+                            if (_localParameterMap.value[event.elementId]?.autoCalculate?.isNotEmpty() == true) {
+                                val sum = calculateSumForElement(
+                                    elementId = event.elementId,
+                                    operatorMap = _operatorMap.value,
+                                    operatorValueMap = _operatorValueMap.value,
+                                    localParameterValueMap = localParameterValueMap.value
+                                )
+
+                                _operatorMap.value.forEach { (key, value) ->
+                                    if (key.contains(event.elementId)) {
+                                        value.forEach { dependentId ->
+                                            _localParameterValueMap.value =
+                                                _localParameterValueMap.value.toMutableMap().apply {
+                                                    put(
+                                                        dependentId,
+                                                        InputWrapper(
+                                                            value = sum.toString(),
+                                                            errorMessage = ""
+                                                        )
+                                                    )
+                                                }
+                                        }
+
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -429,12 +461,13 @@ class FormScreenViewModel : ViewModel() {
                 }
                 _imageList.value = updatedImageList
 
-                _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
-                    this[event.elementId] = InputWrapper(
-                        value = updatedImageList[event.elementId]?.joinToString(",") ?: "",
-                        errorMessage = ""
-                    )
-                }
+                _localParameterValueMap.value =
+                    _localParameterValueMap.value.toMutableMap().apply {
+                        this[event.elementId] = InputWrapper(
+                            value = updatedImageList[event.elementId]?.joinToString(",") ?: "",
+                            errorMessage = ""
+                        )
+                    }
             }
 
             is FormScreenEvent.OnSearchValueChanged -> {
@@ -490,15 +523,16 @@ class FormScreenViewModel : ViewModel() {
                     tempList.add(optionValue)
                 }
 
-                _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
-                    put(
-                        event.elementId,
-                        InputWrapper(
-                            value = tempList.joinToString(","),
-                            errorMessage = ""
+                _localParameterValueMap.value =
+                    _localParameterValueMap.value.toMutableMap().apply {
+                        put(
+                            event.elementId,
+                            InputWrapper(
+                                value = tempList.joinToString(","),
+                                errorMessage = ""
+                            )
                         )
-                    )
-                }
+                    }
 
                 val selectedOptionIds = tempList.mapNotNull { pValue ->
                     _localParameterMap.value[event.elementId]?.elementData?.options
@@ -573,6 +607,8 @@ class FormScreenViewModel : ViewModel() {
         this.httpClient = httpClient
         val tempDependentValueMap = _dependentValueMap.value.toMutableMap()
         val tempDependentOperatorMap = _dependentOperatorMap.value.toMutableMap()
+        val tempOperatorMap = _operatorMap.value.toMutableMap()
+        val tempOperatorValueMap = _operatorValueMap.value.toMutableMap()
 
         try {
             _localParameterMap.value.forEach { (_, element) ->
@@ -634,6 +670,9 @@ class FormScreenViewModel : ViewModel() {
                         }
                 }
 
+                Logger.d("validation") {
+                    element.validation.toString()
+                }
                 element.validation.forEach { validation ->
                     validation.values.forEach { value ->
                         val operatorKeys = value.dependentOperator.split(",").map(String::toInt)
@@ -648,6 +687,21 @@ class FormScreenViewModel : ViewModel() {
                                 value = _localParameterMap.value[key]?.elementValue ?: ""
                             )
                         }
+                    }
+                }
+
+                element.autoCalculate.forEach {
+                    val operatorKeys = it.operator.split(",").map(String::toInt)
+                    val resultValues = it.operatorResult.split(",").map(String::toInt)
+
+                    tempOperatorMap[operatorKeys] = resultValues
+
+                    operatorKeys.forEach { key ->
+                        tempOperatorValueMap[key] = DependentValueCustomText(
+                            isShow = false,
+                            expression = it.operation,
+                            value = _localParameterMap.value[key]?.elementValue ?: ""
+                        )
                     }
                 }
 
@@ -683,7 +737,8 @@ class FormScreenViewModel : ViewModel() {
                             SendUiEvent.send(
                                 viewModelScope = viewModelScope,
                                 _uiEvent = _uiEvent,
-                                event = e.message ?: "An unknown error occurred. Please try again."
+                                event = e.message
+                                    ?: "An unknown error occurred. Please try again."
                             )
                         }
                     }
@@ -695,6 +750,8 @@ class FormScreenViewModel : ViewModel() {
 
         _dependentOperatorMap.value = tempDependentOperatorMap
         _dependentValueMap.value = tempDependentValueMap
+        _operatorMap.value = tempOperatorMap
+        _operatorValueMap.value = tempOperatorValueMap
     }
 
     private fun checkCombinationOfPValue() {
@@ -787,7 +844,8 @@ class FormScreenViewModel : ViewModel() {
     }
 
     private fun updateLocalParameterValue(elementId: Int) {
-        val resourcePathList = _imageList.value[elementId]?.map { it.resourcePath } ?: emptyList()
+        val resourcePathList =
+            _imageList.value[elementId]?.map { it.resourcePath } ?: emptyList()
         _localParameterValueMap.value = _localParameterValueMap.value.toMutableMap().apply {
             this[elementId] = InputWrapper(
                 value = resourcePathList.joinToString(","),
@@ -855,7 +913,8 @@ class FormScreenViewModel : ViewModel() {
                                     ?: throw IllegalArgumentException("Image data cannot be null or empty"),
                                 headers = Headers.build {
                                     append(
-                                        HttpHeaders.ContentType, ContentType.Image.PNG.toString()
+                                        HttpHeaders.ContentType,
+                                        ContentType.Image.PNG.toString()
                                     )
                                     append(
                                         HttpHeaders.ContentDisposition,
