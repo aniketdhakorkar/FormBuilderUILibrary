@@ -9,7 +9,8 @@ fun calculateRemainingValuesForValueChange(
     newValue: String,
     dependentOperatorMap: Map<List<Int>, List<Int>>,
     dependentValueMap: Map<Int, DependentValueCustomText>,
-    localParameterValueMap: Map<Int, InputWrapper>
+    localParameterValueMap: Map<Int, InputWrapper>,
+    isSkipEqualConditions: Boolean = false
 ): Quadruple {
     var remainingValue = 0
     var parentValue = 0
@@ -49,7 +50,7 @@ fun calculateRemainingValuesForValueChange(
 
                     if (firstCharOfNewValue <= firstCharOfDependentValue) {
                         return Quadruple(
-                            remainingValue = 0,
+                            remainingValue = if (isSkipEqualConditions) parentValue - childValue else 0,
                             parentValue = parentValue,
                             childValue = childValue,
                             expression = expression,
@@ -67,7 +68,7 @@ fun calculateRemainingValuesForValueChange(
                     newValue.toInt() < parentValue
                 ) {
                     return Quadruple(
-                        remainingValue = 0,
+                        remainingValue = if (childValue >= parentValue) parentValue - childValue else 0,
                         parentValue = parentValue,
                         childValue = childValue,
                         expression = expression,

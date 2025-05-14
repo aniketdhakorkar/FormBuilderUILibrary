@@ -390,23 +390,56 @@ class FormScreenViewModel : ViewModel() {
                     _showProgressIndicator.value = true
                     _isSubmitButtonEnabled.value = false
 
+                    _localParameterMap.value.forEach { (elementId, childrenX) ->
+                        if (_localVisibilityStatusMap.value[elementId] == true) {
+                            if (childrenX.inputType == "number") {
+                                val (remainingValue, parentValue, childValue, expression, dependentValue) = calculateRemainingValuesForValueChange(
+                                    elementId = elementId,
+                                    newValue = _localParameterValueMap.value[elementId]?.value
+                                        ?: "",
+                                    dependentOperatorMap = _dependentOperatorMap.value,
+                                    dependentValueMap = _dependentValueMap.value,
+                                    localParameterValueMap = _localParameterValueMap.value,
+                                    isSkipEqualConditions = true
+                                )
+
+                                val errorMessage = expressionValidation(
+                                    expression = expression,
+                                    remainingValue = remainingValue,
+                                    parentValue = parentValue,
+                                    childValue = childValue,
+                                    dependentValue = dependentValue,
+                                )
+
+                                if (errorMessage.isNotBlank()) {
+                                    SendUiEvent.send(
+                                        viewModelScope = viewModelScope,
+                                        _uiEvent = _uiEvent,
+                                        event = errorMessage
+                                    )
+                                    _localParameterValueMap.value =
+                                        _localParameterValueMap.value.toMutableMap().apply {
+                                            put(
+                                                elementId,
+                                                InputWrapper(
+                                                    value = localParameterValueMap.value[elementId]?.value
+                                                        ?: "",
+                                                    errorMessage = errorMessage,
+                                                    isFocus = true
+                                                )
+                                            )
+                                        }
+                                }
+                            }
+                        }
+                    }
+
                     val isFieldEmpty = _localParameterValueMap.value.run {
                         isEmpty() || any { (key, inputWrapper) ->
                             val parameter = _localParameterMap.value[key]
                             val isVisible = _localVisibilityStatusMap.value[key] == true
                             val isRequired = parameter?.isRequired == "true"
                             parameter?.elementType != "ElementLabel" && isVisible && isRequired && inputWrapper.value.isEmpty()
-                        }
-                    }
-
-                    _localParameterMap.value.forEach { (elementId, childrenX) ->
-                        if (_localVisibilityStatusMap.value[elementId] == true) {
-                            if (childrenX.inputType == "number") {
-                                validateInputForRemainingValue(
-                                    elementId = childrenX.elementId,
-                                    newValue = _localParameterValueMap.value[elementId]?.value ?: ""
-                                )
-                            }
                         }
                     }
 
@@ -993,43 +1026,5 @@ class FormScreenViewModel : ViewModel() {
             throw Exception("Failed to parse the response. Please try again later.")
         }
         return imageUrl
-    }
-
-    private fun validateInputForRemainingValue(elementId: Int, newValue: String) {
-        val (remainingValue, parentValue, childValue, expression, dependentValue) = calculateRemainingValuesForValueChange(
-            elementId = elementId,
-            newValue = newValue,
-            dependentOperatorMap = _dependentOperatorMap.value,
-            dependentValueMap = _dependentValueMap.value,
-            localParameterValueMap = _localParameterValueMap.value
-        )
-
-        val errorMessage = expressionValidation(
-            expression = expression,
-            remainingValue = remainingValue,
-            parentValue = parentValue,
-            childValue = childValue,
-            dependentValue = dependentValue,
-        )
-
-        if (errorMessage.isNotBlank()) {
-            SendUiEvent.send(
-                viewModelScope = viewModelScope,
-                _uiEvent = _uiEvent,
-                event = errorMessage
-            )
-            _localParameterValueMap.value =
-                _localParameterValueMap.value.toMutableMap().apply {
-                    put(
-                        elementId,
-                        InputWrapper(
-                            value = localParameterValueMap.value[elementId]?.value ?: "",
-                            errorMessage = errorMessage,
-                            isFocus = true
-                        )
-                    )
-                }
-            return
-        }
     }
 }
