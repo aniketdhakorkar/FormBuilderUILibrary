@@ -26,15 +26,46 @@ fun calculateRemainingValuesForValueChange(
 
         childValue = 0
         for (childId in childIds) {
-            val valueStr = if (childId == elementId) newValue else localParameterValueMap[childId]?.value.orEmpty()
+            val valueStr = if (childId == elementId) {
+                newValue
+            } else {
+                localParameterValueMap[childId]?.value.orEmpty()
+            }
+
             val valueInt = valueStr.toIntOrNull() ?: 0
             childValue += valueInt
 
             if (childId == elementId) {
                 expression = dependentValueMap[childId]?.expression.orEmpty()
                 dependentValue = dependentValueMap[childId]?.value.orEmpty()
+
+                if (
+                    expression == "equal" &&
+                    valueStr.isNotBlank() &&
+                    dependentValue.length > valueStr.length
+                ) {
+                    val firstCharOfDependentValue = dependentValue.first()
+                    val firstCharOfNewValue = valueStr.first()
+
+                    if (firstCharOfNewValue <= firstCharOfDependentValue) {
+                        return Quadruple(
+                            remainingValue = 0,
+                            parentValue = parentValue,
+                            childValue = childValue,
+                            expression = expression,
+                            dependentValue = dependentValue
+                        )
+                    }
+                }
             } else {
-                if (expression == "equal" && localParameterValueMap[childId]?.value?.isBlank() == true) {
+                val isBlank = localParameterValueMap[childId]?.value?.isBlank() == true
+
+                if (
+                    expression == "equal" &&
+                    isBlank &&
+                    newValue.isNotBlank() &&
+                    newValue.toInt() < parentValue
+                ) {
                     return Quadruple(
                         remainingValue = 0,
                         parentValue = parentValue,
