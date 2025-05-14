@@ -285,8 +285,12 @@ class FormScreenViewModel : ViewModel() {
                                         put(
                                             event.elementId,
                                             InputWrapper(
-                                                value = if (event.value.isNotBlank()) localParameterValueMap.value[event.elementId]?.value
-                                                    ?: "" else "",
+                                                value = if (event.value.isNotBlank() && (localParameterValueMap.value[event.elementId]?.value
+                                                        ?: "").length > event.value.length
+                                                ) {
+                                                    localParameterValueMap.value[event.elementId]?.value
+                                                        ?: ""
+                                                } else "",
                                                 errorMessage = errorMessage,
                                                 isFocus = true
                                             )
@@ -392,6 +396,17 @@ class FormScreenViewModel : ViewModel() {
                             val isVisible = _localVisibilityStatusMap.value[key] == true
                             val isRequired = parameter?.isRequired == "true"
                             parameter?.elementType != "ElementLabel" && isVisible && isRequired && inputWrapper.value.isEmpty()
+                        }
+                    }
+
+                    _localParameterMap.value.forEach { (elementId, childrenX) ->
+                        if (_localVisibilityStatusMap.value[elementId] == true) {
+                            if (childrenX.inputType == "number") {
+                                validateInputForRemainingValue(
+                                    elementId = childrenX.elementId,
+                                    newValue = _localParameterValueMap.value[elementId]?.value ?: ""
+                                )
+                            }
                         }
                     }
 
@@ -761,7 +776,7 @@ class FormScreenViewModel : ViewModel() {
             val selectedValues = _localParameterValueMap.value
                 .filterKeys { it in relevantKeys }
                 .values
-                .mapNotNull { it.value.takeIf {it1 -> it1.isNotBlank() } }
+                .mapNotNull { it.value.takeIf { it1 -> it1.isNotBlank() } }
                 .sorted()
                 .joinToString(", ")
 
@@ -978,5 +993,43 @@ class FormScreenViewModel : ViewModel() {
             throw Exception("Failed to parse the response. Please try again later.")
         }
         return imageUrl
+    }
+
+    private fun validateInputForRemainingValue(elementId: Int, newValue: String) {
+        val (remainingValue, parentValue, childValue, expression, dependentValue) = calculateRemainingValuesForValueChange(
+            elementId = elementId,
+            newValue = newValue,
+            dependentOperatorMap = _dependentOperatorMap.value,
+            dependentValueMap = _dependentValueMap.value,
+            localParameterValueMap = _localParameterValueMap.value
+        )
+
+        val errorMessage = expressionValidation(
+            expression = expression,
+            remainingValue = remainingValue,
+            parentValue = parentValue,
+            childValue = childValue,
+            dependentValue = dependentValue,
+        )
+
+        if (errorMessage.isNotBlank()) {
+            SendUiEvent.send(
+                viewModelScope = viewModelScope,
+                _uiEvent = _uiEvent,
+                event = errorMessage
+            )
+            _localParameterValueMap.value =
+                _localParameterValueMap.value.toMutableMap().apply {
+                    put(
+                        elementId,
+                        InputWrapper(
+                            value = localParameterValueMap.value[elementId]?.value ?: "",
+                            errorMessage = errorMessage,
+                            isFocus = true
+                        )
+                    )
+                }
+            return
+        }
     }
 }
