@@ -668,9 +668,6 @@ class FormScreenViewModel : ViewModel() {
                         }
                 }
 
-                Logger.d("validation") {
-                    element.validation.toString()
-                }
                 element.validation.forEach { validation ->
                     validation.values.forEach { value ->
                         val operatorKeys = value.dependentOperator.split(",").map(String::toInt)
