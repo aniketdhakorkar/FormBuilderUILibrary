@@ -1,6 +1,5 @@
 package ui.component
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,7 +26,6 @@ import model.DependentValueCustomText
 import util.InputWrapper
 import model.parameters.Style
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 
 fun CreateTextField(
@@ -52,7 +50,6 @@ fun CreateTextField(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
-
 
     CardContainer(cardBackgroundColor = cardBackgroundColor) {
         GenerateText(

@@ -106,6 +106,7 @@ class FormScreenViewModel : ViewModel() {
     private var _activity = ""
     private var _form = ""
     private var _action = ""
+    private val _hasFocusChangedOnce = MutableStateFlow(false)
     private val _uiEvent = Channel<String>()
     val uiEvent = _uiEvent.receiveAsFlow()
 
@@ -205,7 +206,8 @@ class FormScreenViewModel : ViewModel() {
 
             is FormScreenEvent.OnTextFieldFocusChanged -> {
                 if (event.isFocused) {
-
+                    _hasFocusChangedOnce.value = true
+                    elementId = event.elementId
                     val remainingValue =
                         calculateRemainingValuesForFocusChange(
                             elementId = event.elementId,
@@ -219,6 +221,63 @@ class FormScreenViewModel : ViewModel() {
                             value = "$remainingValue"
                         )
                     }.toMutableMap()
+
+                } else if (!event.isFocused && _hasFocusChangedOnce.value && elementId == event.elementId) {
+                    val isFieldEmpty =
+                        _localParameterMap.value[event.elementId]?.isRequired == "true" &&
+                                _localParameterValueMap.value[event.elementId]?.value?.isEmpty() == true
+
+                    if (isFieldEmpty) {
+                        Logger.d("elementId") {
+                            event.elementId.toString()
+                        }
+                        _localParameterValueMap.value =
+                            _localParameterValueMap.value.toMutableMap().apply {
+                                put(
+                                    event.elementId,
+                                    InputWrapper(
+                                        value = localParameterValueMap.value[event.elementId]?.value
+                                            ?: "",
+                                        errorMessage = "Field should not be empty",
+                                        isFocus = false
+                                    )
+                                )
+                            }
+                    }
+
+                    val (remainingValue, parentValue, childValue, expression, dependentValue)
+                            = calculateRemainingValuesForValueChange(
+                        elementId = event.elementId,
+                        newValue = _localParameterValueMap.value[event.elementId]?.value
+                            ?: "",
+                        dependentOperatorMap = _dependentOperatorMap.value,
+                        dependentValueMap = _dependentValueMap.value,
+                        localParameterValueMap = _localParameterValueMap.value,
+                        isSkipEqualConditions = true
+                    )
+
+                    val errorMessage = expressionValidation(
+                        expression = expression,
+                        remainingValue = remainingValue,
+                        parentValue = parentValue,
+                        childValue = childValue,
+                        dependentValue = dependentValue,
+                    )
+
+                    if (errorMessage.isNotBlank()) {
+                        _localParameterValueMap.value =
+                            _localParameterValueMap.value.toMutableMap().apply {
+                                put(
+                                    event.elementId,
+                                    InputWrapper(
+                                        value = localParameterValueMap.value[event.elementId]?.value
+                                            ?: "",
+                                        errorMessage = errorMessage,
+                                        isFocus = false
+                                    )
+                                )
+                            }
+                    }
                 }
             }
 
