@@ -682,6 +682,17 @@ class FormScreenViewModel : ViewModel() {
                         )
                     }
             }
+
+            is FormScreenEvent.OnTimeValueChanged -> {
+                _localParameterValueMap.value = _localParameterValueMap.value
+                    .toMutableMap()
+                    .apply {
+                        put(
+                            event.elementId,
+                            InputWrapper(value = event.value, errorMessage = "")
+                        )
+                    }
+            }
         }
     }
 

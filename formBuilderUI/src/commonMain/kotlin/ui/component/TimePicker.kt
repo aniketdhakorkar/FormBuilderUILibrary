@@ -1,9 +1,9 @@
 package ui.component
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -11,16 +11,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material3.Button
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDialog
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
@@ -43,18 +42,15 @@ import ui.helper.SupportingText
 import ui.helper.bringIntoView
 import ui.helper.getOutlinedTextFieldColors
 import util.InputWrapper
-import util.convertMillisToDate
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, ExperimentalTime::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateDatePicker(
+fun CreateTimePicker(
     question: String,
     description: String,
     style: Style?,
-    dateValue: InputWrapper,
-    onDateValueChanged: (String) -> Unit,
+    timeValue: InputWrapper,
+    onTimeValueChanged: (String) -> Unit,
     isMandatory: String,
     isVisible: Boolean,
     isEnabled: Boolean,
@@ -66,13 +62,8 @@ fun CreateDatePicker(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
-    val state = rememberDatePickerState(
-        selectableDates = object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis <= Clock.System.now().toEpochMilliseconds()
-            }
-        })
-    val showDatePicker = remember { mutableStateOf(false) }
+    val state = rememberTimePickerState()
+    val showTimePicker = remember { mutableStateOf(false) }
 
     CardContainer(cardBackgroundColor = cardBackgroundColor) {
         GenerateText(
@@ -84,14 +75,14 @@ fun CreateDatePicker(
 
         Box {
             OutlinedTextField(
-                value = dateValue.value,
+                value = timeValue.value,
                 onValueChange = {},
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester)
                     .onFocusChanged {
                         if (isEnabled && it.isFocused) {
-                            showDatePicker.value = true
+                            showTimePicker.value = true
                             bringIntoView(coroutineScope, bringIntoViewRequester)
                         }
                     },
@@ -113,10 +104,10 @@ fun CreateDatePicker(
                         FocusDirection.Down
                     )
                 }),
-                isError = dateValue.errorMessage.isNotEmpty(),
+                isError = timeValue.errorMessage.isNotEmpty(),
                 supportingText = {
                     SupportingText(
-                        errorMessage = dateValue.errorMessage
+                        errorMessage = timeValue.errorMessage
                     )
                 }
             )
@@ -134,18 +125,26 @@ fun CreateDatePicker(
             )
         }
 
-        if (showDatePicker.value) {
-            DatePickerDialog(
-                onDismissRequest = { showDatePicker.value = false },
+        if (showTimePicker.value) {
+            TimePickerDialog(
+                onDismissRequest = { showTimePicker.value = false },
+                title = {
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        text = "Select Time",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
                 confirmButton = {
                     Button(
                         onClick = {
-                            onDateValueChanged(convertMillisToDate(state.selectedDateMillis ?: 0))
+                            onTimeValueChanged("${state.hour}:${state.minute}")
                             focusManager.clearFocus()
                             focusRequester.requestFocus()
-                            showDatePicker.value = false
-                        },
-                        enabled = state.selectedDateMillis != null
+                            showTimePicker.value = false
+                        }
                     ) {
                         Text(text = "OK")
                     }
@@ -154,28 +153,23 @@ fun CreateDatePicker(
                     TextButton(onClick = {
                         focusManager.clearFocus()
                         focusRequester.requestFocus()
-                        showDatePicker.value = false
+                        showTimePicker.value = false
                     }) {
                         Text(text = "Cancel")
                     }
-                }) {
-
-                DatePicker(
-                    title = {},
-                    state = state,
-                    showModeToggle = false,
-                )
+                }
+            ) {
+                TimePicker(state = state)
             }
         }
     }
 
     // Auto-focus on error
     SideEffect {
-        if (dateValue.isFocus) {
-            dateValue.isFocus = false
+        if (timeValue.isFocus) {
+            timeValue.isFocus = false
             focusRequester.requestFocus()
             bringIntoView(coroutineScope, bringIntoViewRequester)
         }
     }
 }
-

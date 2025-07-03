@@ -43,6 +43,7 @@ import okio.FileSystem
 import ui.component.CreateCamera
 import ui.component.CreateCheckbox
 import ui.component.CreateDatePicker
+import ui.component.CreateTimePicker
 import util.SnackbarController
 
 @Composable
@@ -294,6 +295,27 @@ fun FormScreen(
                                     onDateValueChanged = {
                                         viewModel.onEvent(
                                             FormScreenEvent.OnDateValueChanged(
+                                                elementId = elementId,
+                                                value = it
+                                            )
+                                        )
+                                    }
+                                )
+                            }
+
+                            "ElementTime" -> {
+                                CreateTimePicker(
+                                    question = question,
+                                    description = description,
+                                    style = style,
+                                    isMandatory = isMandatory,
+                                    isVisible = isVisible,
+                                    isEnabled = isEnabled,
+                                    focusManager = focusManager,
+                                    timeValue = parameterValue,
+                                    onTimeValueChanged = {
+                                        viewModel.onEvent(
+                                            FormScreenEvent.OnTimeValueChanged(
                                                 elementId = elementId,
                                                 value = it
                                             )
