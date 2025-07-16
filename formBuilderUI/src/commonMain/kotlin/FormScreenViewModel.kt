@@ -368,7 +368,7 @@ class FormScreenViewModel : ViewModel() {
                                 }
 
                             if (_localParameterMap.value[event.elementId]?.autoCalculate?.isNotEmpty() == true) {
-                                val sum = calculateSumForElement(
+                                val sumMap = calculateSumForElement(
                                     elementId = event.elementId,
                                     operatorMap = _operatorMap.value,
                                     operatorValueMap = _operatorValueMap.value,
@@ -378,12 +378,14 @@ class FormScreenViewModel : ViewModel() {
                                 _operatorMap.value.forEach { (key, value) ->
                                     if (key.contains(event.elementId)) {
                                         value.forEach { dependentId ->
+                                            val sum = sumMap.entries.find { (idList, _) -> dependentId in idList }?.value
+
                                             _localParameterValueMap.value =
                                                 _localParameterValueMap.value.toMutableMap().apply {
                                                     put(
                                                         dependentId,
                                                         InputWrapper(
-                                                            value = sum.toString(),
+                                                            value = sum?.toString() ?: "",
                                                             errorMessage = ""
                                                         )
                                                     )
