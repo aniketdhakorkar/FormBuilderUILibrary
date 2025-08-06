@@ -162,42 +162,49 @@ class FormScreenViewModel : ViewModel() {
 
 
                 _localParameterMap.value[event.elementId]?.elementData?.let { elementData ->
-                    elementData.dataUrl?.let {
-                        elementData.dependentApi?.forEach { api ->
-                            viewModelScope.launch {
-                                try {
-                                    val filterMap = api.parameter.mapValues { (_, value) ->
-                                        val paramValue =
-                                            _localParameterValueMap.value[value]?.value.orEmpty()
-                                        if (_action == "filter") {
-                                            Json.decodeFromString<DropdownOption>(paramValue).pValue.toString()
-                                        } else {
-                                            paramValue.ifEmpty { "0" }
-                                        }
+
+                    if (elementData.dataUrl != null) {
+                        viewModelScope.launch {
+                            remoteApi(
+                                url = elementData.dataUrl,
+                                elementId = event.elementId,
+                            )
+                        }
+                    }
+                    elementData.dependentApi?.forEach { api ->
+                        viewModelScope.launch {
+                            try {
+                                val filterMap = api.parameter.mapValues { (_, value) ->
+                                    val paramValue =
+                                        _localParameterValueMap.value[value]?.value.orEmpty()
+                                    if (_action == "filter") {
+                                        Json.decodeFromString<DropdownOption>(paramValue).pValue.toString()
+                                    } else {
+                                        paramValue.ifEmpty { "0" }
                                     }
-
-                                    remoteApi(
-                                        url = api.url,
-                                        filterMap = filterMap,
-                                        elementId = api.dependent
-                                    )
-
-                                    _localParameterValueMap.value =
-                                        _localParameterValueMap.value.toMutableMap().apply {
-                                            put(
-                                                api.dependent,
-                                                InputWrapper(value = "", errorMessage = "")
-                                            )
-                                        }
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                    SendUiEvent.send(
-                                        viewModelScope = viewModelScope,
-                                        _uiEvent = _uiEvent,
-                                        event = e.message
-                                            ?: "An unknown error occurred. Please try again."
-                                    )
                                 }
+
+                                remoteApi(
+                                    url = api.url,
+                                    filterMap = filterMap,
+                                    elementId = api.dependent
+                                )
+
+                                _localParameterValueMap.value =
+                                    _localParameterValueMap.value.toMutableMap().apply {
+                                        put(
+                                            api.dependent,
+                                            InputWrapper(value = "", errorMessage = "")
+                                        )
+                                    }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                SendUiEvent.send(
+                                    viewModelScope = viewModelScope,
+                                    _uiEvent = _uiEvent,
+                                    event = e.message
+                                        ?: "An unknown error occurred. Please try again."
+                                )
                             }
                         }
                     }
@@ -378,7 +385,8 @@ class FormScreenViewModel : ViewModel() {
                                 _operatorMap.value.forEach { (key, value) ->
                                     if (key.contains(event.elementId)) {
                                         value.forEach { dependentId ->
-                                            val sum = sumMap.entries.find { (idList, _) -> dependentId in idList }?.value
+                                            val sum =
+                                                sumMap.entries.find { (idList, _) -> dependentId in idList }?.value
 
                                             _localParameterValueMap.value =
                                                 _localParameterValueMap.value.toMutableMap().apply {
@@ -971,7 +979,7 @@ class FormScreenViewModel : ViewModel() {
 
     private suspend fun remoteApi(
         url: String,
-        filterMap: Map<String, String>,
+        filterMap: Map<String, String> = emptyMap(),
         elementId: Int
     ) {
         val result = try {
