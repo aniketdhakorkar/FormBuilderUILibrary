@@ -3,9 +3,11 @@ package util
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
+import kotlinx.datetime.number
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @OptIn(ExperimentalTime::class)
 fun convertDateToMillis(dateString: String): Long {
@@ -23,7 +25,10 @@ fun convertDateToMillis(dateString: String): Long {
 
 @OptIn(ExperimentalTime::class)
 fun convertMillisToDate(millis: Long): String {
-    val instant = kotlin.time.Instant.fromEpochMilliseconds(millis)
+    val instant = Instant.fromEpochMilliseconds(millis)
     val localDate = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
-    return localDate.toString()
+    val dd = localDate.day.toString().padStart(2, '0')
+    val mm = localDate.month.number.toString().padStart(2, '0') // 1..12
+    val yyyy = localDate.year.toString()
+    return "$dd-$mm-$yyyy"
 }

@@ -97,6 +97,8 @@ class FormScreenViewModel : ViewModel() {
     private val _combinationPValueList = MutableStateFlow<Map<String, List<String>>>(emptyMap())
     private val _showProgressIndicator = MutableStateFlow(false)
     val showProgressIndicator = _showProgressIndicator.asStateFlow()
+    private val _isSubmitButtonEnabled = MutableStateFlow(true)
+    val isSubmitButtonEnabled = _isSubmitButtonEnabled.asStateFlow()
     private val _imageList = MutableStateFlow<Map<Int, List<ImageModel>>>(emptyMap())
     val imageList = _imageList.asStateFlow()
     private val _isViewCamera = MutableStateFlow(false)
@@ -455,6 +457,7 @@ class FormScreenViewModel : ViewModel() {
             is FormScreenEvent.OnSubmitButtonClicked -> {
                 try {
                     _showProgressIndicator.value = true
+                    _isSubmitButtonEnabled.value = false
 
                     _localParameterMap.value.forEach { (elementId, childrenX) ->
                         if (_localVisibilityStatusMap.value[elementId] == true) {
@@ -538,6 +541,7 @@ class FormScreenViewModel : ViewModel() {
                     SendUiEvent.send(viewModelScope, _uiEvent, "An error occurred. Try again.")
                 } finally {
                     _showProgressIndicator.value = false
+                    _isSubmitButtonEnabled.value = true
                 }
             }
 
@@ -721,6 +725,7 @@ class FormScreenViewModel : ViewModel() {
         _action = action
         _activity = activity
         _form = form
+        _isSubmitButtonEnabled.value = true
         _imageList.value = _imageList.value.toMutableMap().apply {
             clear()
         }
