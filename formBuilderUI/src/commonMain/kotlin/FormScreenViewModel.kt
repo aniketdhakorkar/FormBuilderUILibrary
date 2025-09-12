@@ -95,8 +95,6 @@ class FormScreenViewModel : ViewModel() {
     private val _operatorValueMap =
         MutableStateFlow<Map<Int, DependentValueCustomText>>(emptyMap())
     private val _combinationPValueList = MutableStateFlow<Map<String, List<String>>>(emptyMap())
-    private val _showProgressIndicator = MutableStateFlow(false)
-    val showProgressIndicator = _showProgressIndicator.asStateFlow()
     private val _isSubmitButtonEnabled = MutableStateFlow(true)
     val isSubmitButtonEnabled = _isSubmitButtonEnabled.asStateFlow()
     private val _imageList = MutableStateFlow<Map<Int, List<ImageModel>>>(emptyMap())
@@ -456,9 +454,7 @@ class FormScreenViewModel : ViewModel() {
 
             is FormScreenEvent.OnSubmitButtonClicked -> {
                 try {
-                    _showProgressIndicator.value = true
                     _isSubmitButtonEnabled.value = false
-
                     _localParameterMap.value.forEach { (elementId, childrenX) ->
                         if (_localVisibilityStatusMap.value[elementId] == true) {
                             if (childrenX.inputType == "number") {
@@ -539,9 +535,6 @@ class FormScreenViewModel : ViewModel() {
                 } catch (e: Exception) {
                     e.printStackTrace()
                     SendUiEvent.send(viewModelScope, _uiEvent, "An error occurred. Try again.")
-                } finally {
-                    _showProgressIndicator.value = false
-                    _isSubmitButtonEnabled.value = true
                 }
             }
 
@@ -722,10 +715,10 @@ class FormScreenViewModel : ViewModel() {
         _localVisibilityStatusMap.value = visibilityMap
         _localEnabledStatusMap.value = enabledStatusMap
         _combinationPValueList.value = combinationPValueList
+        _isSubmitButtonEnabled.value = true
         _action = action
         _activity = activity
         _form = form
-        _isSubmitButtonEnabled.value = true
         _imageList.value = _imageList.value.toMutableMap().apply {
             clear()
         }

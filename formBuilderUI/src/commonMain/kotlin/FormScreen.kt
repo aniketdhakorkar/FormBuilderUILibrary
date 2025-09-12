@@ -73,7 +73,6 @@ fun FormScreen(
     val dependentValueMap by viewModel.dependentValueMap.collectAsState()
     val focusManager = LocalFocusManager.current
     val imageList by viewModel.imageList.collectAsState()
-    val showProgressIndicator by viewModel.showProgressIndicator.collectAsState()
     val searchText by viewModel.searchText.collectAsState()
     val isSubmitButtonEnabled by viewModel.isSubmitButtonEnabled.collectAsState()
     val isViewCamera by viewModel.isViewCamera.collectAsState()
@@ -329,7 +328,6 @@ fun FormScreen(
 
                 if (action != "view")
                     SubmitButton(
-                        showProgressIndicator = showProgressIndicator,
                         isEnabled = isSubmitButtonEnabled,
                         onClick = {
                             viewModel.onEvent(FormScreenEvent.OnSubmitButtonClicked(onClick))
