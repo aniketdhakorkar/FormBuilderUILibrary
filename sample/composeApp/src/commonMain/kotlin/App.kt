@@ -22,10 +22,10 @@ fun App(
             visibilityMap = visibilityMap,
             enabledStatusMap = enabledStatusMap,
             combinationPValueList = combinationPValueList,
-            onClick = { _, _ -> },
+            onClick = { _, _, _, _ -> },
             action = "add",
-            activity = "10",
-            form = "3",
+            activity = 10,
+            form = 3,
             httpClient = httpClient
         )
     }

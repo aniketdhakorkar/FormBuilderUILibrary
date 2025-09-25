@@ -101,8 +101,8 @@ class FormScreenViewModel : ViewModel() {
     val imageList = _imageList.asStateFlow()
     private val _isViewCamera = MutableStateFlow(false)
     val isViewCamera = _isViewCamera.asStateFlow()
-    private var _activity = ""
-    private var _form = ""
+    private var _activity = 0
+    private var _form = 0
     private var _action = ""
     private val _hasFocusChangedOnce = MutableStateFlow(false)
     private val _uiEvent = Channel<String>()
@@ -494,6 +494,7 @@ class FormScreenViewModel : ViewModel() {
                                                 )
                                             )
                                         }
+                                    _isSubmitButtonEnabled.value = true
                                 }
                             }
                         }
@@ -515,26 +516,35 @@ class FormScreenViewModel : ViewModel() {
                         _localParameterValueMap.value.values.firstOrNull { it.errorMessage.isNotBlank() }
 
                     when {
-                        isFieldEmpty -> SendUiEvent.send(
-                            viewModelScope,
-                            _uiEvent,
-                            "Field should not be empty"
-                        )
+                        isFieldEmpty -> {
+                            SendUiEvent.send(
+                                viewModelScope,
+                                _uiEvent,
+                                "Field should not be empty"
+                            )
+                            _isSubmitButtonEnabled.value = true
+                        }
 
-                        firstError != null -> SendUiEvent.send(
-                            viewModelScope,
-                            _uiEvent,
-                            firstError.errorMessage
-                        )
+                        firstError != null -> {
+                            SendUiEvent.send(
+                                viewModelScope,
+                                _uiEvent,
+                                firstError.errorMessage
+                            )
+                            _isSubmitButtonEnabled.value = true
+                        }
 
                         else -> event.onClick(
                             _localParameterValueMap.value,
-                            _localVisibilityStatusMap.value
+                            _localVisibilityStatusMap.value,
+                            _activity,
+                            _form
                         )
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     SendUiEvent.send(viewModelScope, _uiEvent, "An error occurred. Try again.")
+                    _isSubmitButtonEnabled.value = true
                 }
             }
 
@@ -705,8 +715,8 @@ class FormScreenViewModel : ViewModel() {
         visibilityMap: Map<Int, Boolean>,
         enabledStatusMap: Map<Int, Boolean>,
         combinationPValueList: Map<String, List<String>>,
-        activity: String,
-        form: String,
+        activity: Int,
+        form: Int,
         action: String,
         httpClient: HttpClient
     ) {
@@ -978,8 +988,8 @@ class FormScreenViewModel : ViewModel() {
         val result = try {
             httpClient.get(url) {
                 url {
-                    parameters.append("activity", _activity)
-                    parameters.append("form", _form)
+                    parameters.append("activity", "$_activity")
+                    parameters.append("form", "$_form")
                     filterMap.forEach { (key, value) ->
                         parameters.append(key, value)
                     }

@@ -51,11 +51,11 @@ fun FormScreen(
     parameterValueMap: Map<Int, InputWrapper>,
     parameterMap: Map<Int, ChildrenX>,
     visibilityMap: Map<Int, Boolean>,
-    onClick: (Map<Int, InputWrapper>, Map<Int, Boolean>) -> Unit,
+    onClick: (Map<Int, InputWrapper>, Map<Int, Boolean>, Int, Int) -> Unit,
     enabledStatusMap: Map<Int, Boolean>,
     combinationPValueList: Map<String, List<String>>,
-    activity: String,
-    form: String,
+    activity: Int,
+    form: Int,
     action: String,
     httpClient: HttpClient
 ) {
