@@ -26,7 +26,7 @@ fun calculateRemainingValuesForValueChange(
         }
 
         childValue = 0
-        for (childId in childIds) {
+        childIds.forEachIndexed { index, childId ->
             val valueStr = if (childId == elementId) {
                 newValue
             } else {
@@ -50,7 +50,7 @@ fun calculateRemainingValuesForValueChange(
 
                     if (firstCharOfNewValue <= firstCharOfDependentValue) {
                         return Quadruple(
-                            remainingValue = if (isSkipEqualConditions) parentValue - childValue else 0,
+                            remainingValue = if (isSkipEqualConditions && index == childIds.lastIndex) parentValue - childValue else 0,
                             parentValue = parentValue,
                             childValue = childValue,
                             expression = expression,
