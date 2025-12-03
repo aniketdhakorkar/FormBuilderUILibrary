@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import co.touchlab.kermit.Logger
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.compose.setSingletonImageLoaderFactory
@@ -124,21 +125,21 @@ fun FormScreen(
                         .fillMaxSize()
                         .weight(1f)
                 ) {
-                    items(localParameterMap.toList()) { parameter ->
 
-                        val elementId = parameter.second.elementId
+                    items(localParameterMap.entries.toList(), key = {it.key}){ (_, parameter) ->
+                        val elementId = parameter.elementId
                         val parameterValue =
-                            localParameterValueMap[parameter.first] ?: InputWrapper("")
-                        val isVisible = localVisibilityStatusMap[parameter.first] ?: true
-                        val isEnabled = localEnabledStatusMap[parameter.first] ?: true
-                        val question = parameter.second.elementLabel.en ?: ""
-                        val description = parameter.second.elementTooltip.en ?: ""
-                        val isMandatory = parameter.second.isRequired
-                        val style = parameter.second.style
-                        val isSearch = parameter.second.elementType == "ElementDropDownSearch"
-                        val dbParam = parameter.second.databaseParam
+                            localParameterValueMap[elementId] ?: InputWrapper("")
+                        val isVisible = localVisibilityStatusMap[elementId] ?: true
+                        val isEnabled = localEnabledStatusMap[elementId] ?: true
+                        val question = parameter.elementLabel.en ?: ""
+                        val description = parameter.elementTooltip.en ?: ""
+                        val isMandatory = parameter.isRequired
+                        val style = parameter.style
+                        val isSearch = parameter.elementType == "ElementDropDownSearch"
+                        val dbParam = parameter.databaseParam
 
-                        when (parameter.second.elementType) {
+                        when (parameter.elementType) {
                             "ElementLabel" -> CreateLabel(
                                 question = question,
                                 style = style,
@@ -159,14 +160,14 @@ fun FormScreen(
                                             )
                                         )
                                     },
-                                    isMandatory = parameter.second.isRequired,
-                                    style = parameter.second.style,
-                                    inputType = parameter.second.inputType,
+                                    isMandatory = isMandatory,
+                                    style = style,
+                                    inputType = parameter.inputType,
                                     isVisible = isVisible,
                                     isEnable = isEnabled,
                                     focusManager = focusManager,
                                     onFocusChange = {
-                                        if (parameter.second.inputType == "number") {
+                                        if (parameter.inputType == "number") {
                                             viewModel.onEvent(
                                                 FormScreenEvent.OnTextFieldFocusChanged(
                                                     elementId = elementId,
@@ -191,7 +192,7 @@ fun FormScreen(
                                     isEnabled = isEnabled,
                                     focusManager = focusManager,
                                     action = action,
-                                    optionList = parameter.second.elementData.options.map {
+                                    optionList = parameter.elementData.options.map {
                                         it.toDropdown().copy(dbParam = dbParam)
                                     },
                                     dropdownValue = parameterValue,
@@ -266,7 +267,7 @@ fun FormScreen(
                                     isVisible = isVisible,
                                     isEnabled = isEnabled,
                                     focusManager = focusManager,
-                                    optionList = parameter.second.elementData.options.map {
+                                    optionList = parameter.elementData.options.map {
                                         it.toDropdown().copy(dbParam = dbParam)
                                     },
                                     cbValue = parameterValue,

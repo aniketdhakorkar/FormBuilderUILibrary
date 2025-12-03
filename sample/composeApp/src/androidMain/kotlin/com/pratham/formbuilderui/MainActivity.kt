@@ -81,8 +81,8 @@ class MainActivity : ComponentActivity() {
                                 parameters {
                                     append("app_type", "1")
                                     append("project_id", "6")
-                                    append("program_id", "33")
-                                    append("category_id", "44")
+                                    append("program_id", "39")
+                                    append("category_id", "48")
                                 }
                             )
                         )

@@ -63,7 +63,7 @@ fun CreateDropdown(
     // Set selected text based on dropdown value
 
     selectedText =
-        if (action == "filter" && dropdownValue.value.isNotEmpty())
+        if (action == "filter" && dropdownValue.value.isNotEmpty() && dropdownValue.value.contains("{"))
             Json.decodeFromString<DropdownOption>(dropdownValue.value).optionName
         else
             optionList.find { dropdownValue.value.toIntOrNull() == it.pValue }?.optionName ?: ""
@@ -123,6 +123,8 @@ fun CreateDropdown(
                         if (isEnabled) {
                             focusManager.clearFocus()
                             focusRequester.requestFocus()
+
+
                         }
                     }
             )
