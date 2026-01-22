@@ -827,14 +827,16 @@ class FormScreenViewModel : ViewModel() {
                     }
                 }
 
-                if (!element.elementData.dataUrl.isNullOrBlank()) {
+                if (!element.elementData.dataUrl.isNullOrBlank() || !element.elementData.dependentApi.isNullOrEmpty()) {
                     viewModelScope.launch {
                         try {
-                            remoteApi(
-                                url = element.elementData.dataUrl,
-                                filterMap = emptyMap(),
-                                elementId = element.elementId
-                            )
+                            if (!element.elementData.dataUrl.isNullOrBlank()) {
+                                remoteApi(
+                                    url = element.elementData.dataUrl,
+                                    filterMap = emptyMap(),
+                                    elementId = element.elementId
+                                )
+                            }
 
                             element.elementData.dependentApi?.forEach { api ->
                                 val filterMap = api.parameter.mapValues { (_, value) ->
