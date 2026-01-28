@@ -528,7 +528,7 @@ private suspend fun handleImageCapture(
     onImageCaptured: (ImageModel) -> Unit,
     onCloseButtonClick: () -> Unit
 ) {
-    when (val result = cameraController.takePicture()) {
+    when (val result = cameraController.takePictureToFile()) {
         is ImageCaptureResult.Success -> {
             onImageCaptured(ImageModel(byteImage = result.byteArray))
             onCloseButtonClick()
@@ -536,6 +536,10 @@ private suspend fun handleImageCapture(
 
         is ImageCaptureResult.Error -> {
             println("Image Capture Error: ${result.exception.message}")
+        }
+
+        is ImageCaptureResult.SuccessWithFile -> {
+
         }
     }
 }

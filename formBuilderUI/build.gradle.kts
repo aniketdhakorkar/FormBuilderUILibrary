@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinx.serialization)
-    id("com.vanniktech.maven.publish") version "0.34.0"
+    id("com.vanniktech.maven.publish") version "0.36.0"
 }
 
 kotlin {
@@ -118,7 +118,7 @@ mavenPublishing {
     coordinates(
         groupId = "io.github.aniketdhakorkar",
         artifactId = "form-builder-ui",
-        version = "1.0.5-beta04"
+        version = "1.0.6"
     )
 
     // Configure POM metadata for the published artifact

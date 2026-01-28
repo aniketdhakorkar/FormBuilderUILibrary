@@ -1,20 +1,20 @@
 [versions]
-agp = "8.13.1"
+agp = "9.0.0"
 android-compileSdk = "36"
 android-minSdk = "24"
 android-targetSdk = "36"
-androidx-activityCompose = "1.12.0-rc01"
-compose-plugin = "1.9.3"
-kotlin = "2.2.21"
-kotlinxSerializationJson = "1.9.0"
+androidx-activityCompose = "1.12.2"
+compose-plugin = "1.10.0"
+kotlin = "2.3.0"
+kotlinxSerializationJson = "1.10.0"
 lifecycleViewmodelCompose = "2.9.6"
 kermit = "2.0.8"
 datetime = "0.7.1"
-ktor-client = "3.3.2"
+ktor-client = "3.4.0"
 coroutine = "1.10.2"
 coil = "3.3.0"
 startupRuntime = "1.2.0"
-camera = "0.0.12"
+camera = "0.1.0"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
